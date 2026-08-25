@@ -15,12 +15,12 @@
 
 ## Scenario B — Collaboration and audit · ~2 minutes
 
-1. Switch to **Nurse Alice Wong · Staff**; note that the change updates the server demo identity.
+1. Switch to **Nurse Alice Wong · Staff**; note that this signs into a real server-recognized Supabase Auth demo account.
 2. Open **Comments & tasks**. Add `@clinician Please review dizziness before the next appointment`, resolve/unresolve a thread, and change the renal follow-up to **In Progress**.
 3. Switch to **Dr Marcus Lim · Clinician**. Pin or accept a relevant highlight.
 4. Select **Edit treatment plan**, change one sentence, and save. Explain expected-version conflict protection.
 5. The revision drawer shows a new immutable version and a meaningful before/after diff.
-6. Restore Version 1. Emphasize that restore creates another version; it never deletes intervening history.
+6. Refresh once to show the edit persists, then restore Version 1. Emphasize that restore creates another PostgreSQL-backed version; it never deletes intervening history.
 
 ## Scenario C — Longitudinal context and learning · ~90 seconds
 
@@ -34,7 +34,7 @@
 
 1. Open **Security → Pre-LLM redaction**. Show name, Singapore-style ID, phone, email, address, and DOB replaced before provider invocation.
 2. Switch to **Sarah Tan · Patient**. The Glance/internal timeline and Security surface disappear; only patient-visible summary and instructions remain.
-3. Mention the automated 403 proofs for raw AI notes, internal comments, cross-role overwrites, and cross-clinic access.
+3. Mention that PostgreSQL RLS—not UI hiding—produces the automated denial proofs for raw AI notes, internal comments, cross-role overwrites, and cross-clinic access.
 
 ## Final sentence
 

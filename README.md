@@ -21,18 +21,24 @@ Open Sarah Tan at `/patients/sarah-tan` (or `/`). The clinician workspace suppor
 
 ## Architecture
 
-The application uses React 19, TypeScript, Vinext/Next-compatible routing, Cloudflare Workers, and a relational D1 schema managed by Drizzle. UI state gives the demo immediate interaction feedback; protected API boundaries independently resolve an HttpOnly demo identity and enforce clinic/role policy. Domain logic lives in `lib/domain`, separate from rendering and transport code.
+The submission architecture is native Next.js 16 + TypeScript on Vercel, backed by Supabase Auth and Supabase PostgreSQL with PostgreSQL Row-Level Security. Server routes derive identity from the signed Supabase session and query through the authenticated Supabase client, so RLS—not browser state—is the primary clinic and record boundary. Domain logic remains in `lib/domain`, separate from rendering and transport.
 
-The full relational schema covers clinics, profiles, patients, care entries, immutable versions, comments, tasks, highlights, provenance spans, AI-scribed metadata, importance feedback, clinic weights, audit logs, and redaction events. The generated migration is in `drizzle/`.
+```text
+Browser → Next.js on Vercel → authenticated server routes → Supabase PostgreSQL + RLS
 
-> Prototype persistence note: the deployed schema is D1-ready; the compact authorization/revision micro-test API currently uses an isolate-local repository so tests are deterministic without database bootstrap. Production should switch that repository to D1 transactions before handling real records. The user-facing prototype contains synthetic data only.
+Source interaction → PHI redaction → provider abstraction → structured result
+                   → Supabase PostgreSQL → importance engine → Glance View
+```
+
+SQL migrations in `supabase/migrations/` cover clinics, profiles, patients, care entries, immutable versions, comments, tasks, highlights, provenance spans, AI-scribed metadata, importance feedback, clinic weights, audit logs, and redaction events. Transactional PostgreSQL functions implement versioned edit/revert and persistent bounded learning.
 
 ## Setup
 
-Requirements: Node 22.13+ and Python 3.11+.
+Requirements: Node 22.13+, Python 3.11+, and a Supabase project.
 
 ```bash
 npm install
+npm run db:seed
 npm run dev
 ```
 
@@ -47,23 +53,26 @@ python3 -m venv .venv
 
 ## Environment variables
 
-No key is required. The deterministic scribe provider is the safe default. Copy `.env.example` only when enabling an optional live provider. `OPENAI_API_KEY` must remain server-side. The provider pipeline always calls `redactBeforeProvider()` before provider invocation and validates the returned structure before mutation.
+Copy `.env.example` to `.env.local`. Set the public project URL and publishable key, plus the server-only service-role key and a strong shared password used only to provision the synthetic demo accounts. Never expose the service-role key or demo password with a `NEXT_PUBLIC_` prefix, commit `.env.local`, or paste secrets into issue/commit output.
 
-## Database and seed
+No OpenAI key is required. The deterministic scribe provider is the safe default. `OPENAI_API_KEY`, if enabled, remains server-only; the provider pipeline always calls `redactBeforeProvider()` before invocation and validates structured output before mutation.
 
-The D1 binding is declared as `DB` in `.openai/hosting.json`.
+## Supabase setup, migrations, and seed
+
+Create a Supabase project, then use the official Supabase CLI from the repository root:
 
 ```bash
-npm run db:generate
+supabase login
+supabase link --project-ref YOUR_PROJECT_REF
+supabase db push
+npm run db:seed
 ```
 
-The prototype’s synthetic records are declared in the workspace/demo fixtures. For production, apply `drizzle/*.sql` through the deployment environment, then move the fixtures into an idempotent D1 seed script.
+`scripts/seed-supabase.mjs` uses the server-only service-role key to create/reuse five Auth users, two clinics, six patients, and the Sarah Tan story. It never prints credentials. Re-running it preserves immutable care-entry history.
 
 ## Authentication, RBAC, and clinic isolation
 
-`POST /api/session` accepts only an allowlisted demo role and issues an HttpOnly, same-site identity cookie. Every protected API route resolves this cookie server-side; it does not trust a client-provided role. The policy layer denies cross-clinic access, patient access to internal comments/raw AI notes, and cross-author overwrites between staff and clinicians. `/api/security` provides a small explicit denial boundary for demonstration and tests.
-
-For production, ChatGPT/SIWC or another verified identity provider should identify the human, while the same server policy maps that identity to clinic and role. Demo role switching is intentionally not production authentication.
+`POST /api/session` maps an allowlisted demo role to a server-known synthetic account and signs in through Supabase Auth using a server-only password. The role value selects an account; it never becomes authorization authority. Every protected route verifies Supabase claims and loads the RLS-visible profile. Policies deny cross-clinic access, patient access to internal comments/raw AI notes/audit data, and cross-author overwrites between staff and clinicians.
 
 ## Importance and learning
 
@@ -84,7 +93,7 @@ Care-entry versions are monotonically increasing full snapshots. Reverting Versi
 
 ## Tests and quality gates
 
-Run while `npm run dev` is active:
+After applying migrations and seeding, run while `npm run dev` is active:
 
 ```bash
 npm run lint
@@ -102,12 +111,17 @@ The required tests keep their challenge-specified filenames:
 - `test_concurrent_edits.py`
 - `test_self_learning_importance.py`
 
-Additional tests cover PHI redaction, payload validation, ranking bounds, and patient authorization.
+Additional tests cover PHI redaction, payload validation, ranking bounds, persistence across new sessions, and patient authorization.
+
+## Deployment
+
+Import the GitHub repository into Vercel, keep the framework preset as Next.js, and configure the same Supabase values in Vercel Project Settings → Environment Variables for Production and Preview. Set `NEXT_PUBLIC_SITE_URL` to the final Vercel URL. Apply/seed Supabase before validating the deployment.
 
 ## Known limitations
 
-- Demo identity switching is for presentation, not production authentication.
-- The micro-test API repository must be moved from isolate memory to D1 transactions before real multi-user use.
+- Demo role switching uses real Supabase Auth sessions but is intentionally a presentation convenience, not a general sign-in UI.
+- Live Supabase authorization/persistence tests and the Vercel deployment require project credentials and are not represented as complete until run against the configured project.
+- The prior D1/Sites implementation remains in Git history. Its runtime files are retained only as a fallback until the Vercel deployment is verified, then will be removed in the cleanup stage.
 - Arbitrary selected-text comments, CRDT editing, production voice transcription, EHR/FHIR integration, and real patient data are intentionally excluded.
 - The optional OpenAI provider adapter is represented by the safe provider interface; only the deterministic provider is enabled in this build.
 

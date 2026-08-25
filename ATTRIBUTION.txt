@@ -6,6 +6,10 @@ Runtime and UI dependencies (license verified from installed package metadata):
 - React 19.2.6 — MIT
 - React DOM 19.2.6 — MIT
 - Next.js 16.2.6 — MIT
+- @supabase/supabase-js 2.112.4 — MIT
+- @supabase/ssr 0.12.5 — MIT
+
+Legacy fallback dependencies retained only until Vercel verification:
 - Vinext 1.0.0-beta.3 — MIT
 - Vite 8.0.13 — MIT
 - Tailwind CSS 4.2.1 — MIT

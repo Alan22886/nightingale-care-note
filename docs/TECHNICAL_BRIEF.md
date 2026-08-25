@@ -16,18 +16,19 @@ Sarah Tan’s record compresses eighteen months into exactly three current prior
 
 ```mermaid
 flowchart LR
-  UI[React clinician / staff / patient workspace] --> API[Worker API routes]
-  API --> AUTH[Server identity + clinic RBAC]
+  UI[Browser: clinician / staff / patient workspace] --> NEXT[Next.js on Vercel]
+  NEXT --> API[Server routes]
+  API --> AUTH[Supabase Auth context]
   API --> DOMAIN[Domain services]
   DOMAIN --> SCORE[Deterministic importance + bounded learning]
   DOMAIN --> PROV[Provenance integrity]
   DOMAIN --> REV[Versions + optimistic concurrency]
-  API --> D1[(D1 relational schema)]
+  API --> DB[(Supabase PostgreSQL + RLS)]
   SOURCE[Consult / patient session] --> REDACT[PHI redaction]
   REDACT --> PROVIDER[Mock or optional live scribe provider]
   PROVIDER --> VALIDATE[Structured output validation]
-  VALIDATE --> D1
-  D1 --> PRECOMP[Stored highlights]
+  VALIDATE --> DB
+  DB --> PRECOMP[Stored highlights]
   PRECOMP --> UI
 ```
 
@@ -56,11 +57,11 @@ erDiagram
 
 ## 5. Security and redaction
 
-All displayed records are synthetic. Patient, staff, clinician, and admin policies are enforced at protected API boundaries, including clinic isolation and author ownership. Patients are denied internal comments, raw AI notes, audit data, and provenance endpoints that could reveal forbidden sources. Staff and clinicians cannot overwrite one another’s authored sections.
+All displayed records are synthetic. Supabase Auth establishes identity; PostgreSQL RLS enforces patient, staff, clinician, admin, clinic, visibility, and author-ownership rules at the data layer. Server-route checks supplement RLS. Patients are denied internal comments, raw AI notes, audit data, and provenance that could reveal forbidden sources. Staff and clinicians cannot overwrite one another’s authored sections.
 
 The required provider flow is raw text → name/ID/phone/email/address/DOB redaction → provider → structured validation → care entry. The developer redaction drawer visibly compares the provider boundary before and after. Audit logs never contain note bodies.
 
-The role selector creates a server-recognized HttpOnly demo identity. This makes backend denials demonstrable, but it is intentionally presentation authentication; production must bind roles to a verified identity provider.
+The role selector signs into a server-known synthetic Supabase Auth account using a server-only demo password. The browser never receives the service-role key or password, and a client-supplied role is not trusted as authority.
 
 ## 6. Importance engine
 
@@ -82,4 +83,6 @@ Measured locally on 25 Aug 2026 against the warm `/api/highlights` path, 100 seq
 - **Real patient/EHR integration:** excluded by the synthetic-data scope.
 - **Arbitrary span comments:** entry-level threaded comments are complete; span precision is reserved for provenance.
 
-The D1 schema and migration are production-shaped. The compact micro-test mutation repository remains isolate-local for zero-setup evaluation and should move to D1 transactional writes before multi-user production use. Older records use full, summary, or compressed display tiers; original source is retained, and active medications, diagnoses, allergies, and unresolved tasks never decay only because of age.
+PostgreSQL functions atomically create immutable versions, update current-version pointers, enforce expected-version checks, and write metadata-only audits. Feedback and learned weights persist per clinic. Older records use full, summary, or compressed display tiers; original source is retained, and active medications, diagnoses, allergies, and unresolved tasks never decay only because of age.
+
+The code is Vercel-ready, but live Supabase/RLS validation and the public Vercel deployment remain pending project configuration. The earlier Sites deployment is retained only as a temporary fallback until that verification succeeds.

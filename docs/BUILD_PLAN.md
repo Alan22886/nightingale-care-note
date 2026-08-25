@@ -1,10 +1,8 @@
 # Build Plan Status
 
-The greenfield repository was scaffolded as a React/TypeScript Cloudflare Worker site with a D1 relational schema. The implemented milestones are: clinician-first workspace; five-patient synthetic clinic list; deep Sarah Tan timeline; exactly-three Glance; deterministic importance and bounded learning; immutable span provenance; AI/clinician conflict; comments/tasks; revision/diff/revert; optimistic concurrency; server demo identities; clinic/role denial APIs; patient view; PHI redaction; required micro-tests; benchmark; responsive styling; documentation.
+The first working prototype was a React/TypeScript Cloudflare Worker site with D1 and a private Sites deployment. It remains preserved at the pre-migration checkpoint below. The active migration replaces its runtime authority with native Next.js, Supabase Auth, Supabase PostgreSQL, and PostgreSQL RLS for deployment on Vercel.
 
-Acceptance status: lint and typecheck pass; 12 Python micro-tests pass; production build passes; the measured local warm-path P95 is 4.90 ms; and the validated build is privately deployed through Sites.
-
-Assumptions and exclusions are documented in the README and Technical Brief. The largest known engineering follow-up is replacing the compact isolate-local micro-test repository with D1 transactional mutations; the full D1 schema and generated migration are present.
+Current validation: lint, TypeScript, Python test compilation, and the native Next.js production build pass. The Supabase-backed micro-tests are implemented but cannot be reported as passing until migrations and seed data are applied to a real project. The private Sites build remains a fallback, not the final submission deployment.
 
 ## Pre-Supabase working checkpoint
 
@@ -44,3 +42,12 @@ The submission architecture is now fixed as Next.js + TypeScript on Vercel, back
 - Editing and reverting use PostgreSQL transactions with expected-version checks and metadata-only audit writes.
 - Feedback and learned multipliers persist per clinic and remain bounded to 0.80–1.35.
 - The existing Sites deployment is preserved until the Supabase/Vercel application is verified.
+
+### Stage status
+
+- Stage A — complete and pushed: Supabase clients/config, relational migrations, RLS policies, transactional functions, repeatable Auth/data seed.
+- Stages B–D — complete and pushed: Supabase repositories, Auth sessions, protected API routes, and existing UI interactions wired to persistent APIs.
+- Stage E — test migration complete and pushed; live database/RLS/persistence execution is blocked on Supabase project configuration.
+- Stage F — blocked before deployment: no Supabase project values or Vercel connection are configured.
+- Stage G — intentionally pending until the Supabase/Vercel deployment is verified; the fallback D1/Sites runtime has not been removed.
+- Stage H — architecture and setup documentation updated; final public URL and validation evidence remain pending.
