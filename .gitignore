@@ -39,5 +39,6 @@ __pycache__/
 next-env.d.ts
 /dist/
 /.wrangler/
+/supabase/.temp/
 /outputs/
 /work/
