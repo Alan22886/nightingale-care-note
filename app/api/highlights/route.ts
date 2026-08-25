@@ -1,0 +1,2 @@
+import { NextResponse } from 'next/server'; import { getDemoIdentity } from '../../../lib/server/demo-auth'; import { apiHighlights, sourceEntries } from '../../../lib/server/highlight-fixtures';
+export async function GET(){const identity=await getDemoIdentity();if(identity.role==='patient')return NextResponse.json({error:'Patient access denied'},{status:403});return NextResponse.json({highlights:apiHighlights,sources:sourceEntries});}

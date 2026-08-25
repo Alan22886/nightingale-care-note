@@ -1,0 +1,3 @@
+import { NextResponse } from 'next/server';
+import { getDemoIdentity } from '../../../lib/server/demo-auth';
+export async function GET(request:Request){ const identity=await getDemoIdentity(); const url=new URL(request.url); const resource=url.searchParams.get('resource'); const patientClinic=url.searchParams.get('clinic')||'clinic-a'; if(identity.clinicId!==patientClinic)return NextResponse.json({error:'Clinic scope denied'}, {status:403}); if(identity.role==='patient'&&(resource==='raw-ai'||resource==='internal-comments'))return NextResponse.json({error:'Patient access denied'}, {status:403}); return NextResponse.json({ok:true,resource,identity:{role:identity.role,clinicId:identity.clinicId}}); }
