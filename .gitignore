@@ -30,6 +30,9 @@ yarn-error.log*
 .env*
 !.env.example
 *.tsbuildinfo
+__pycache__/
+*.py[cod]
+.venv/
 
 # deployment and generated files
 .vercel
