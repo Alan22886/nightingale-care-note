@@ -7,6 +7,11 @@ function ensure<T>(data: T | null, error: { message: string; code?: string } | n
   return data;
 }
 
+function withOrderedVersions<T extends { entry_versions?: Array<{ version: number }> }>(entry: T): T {
+  entry.entry_versions?.sort((left, right) => left.version - right.version);
+  return entry;
+}
+
 export async function getPatientWorkspace(context: AuthContext, patientId: string) {
   const db = context.supabase;
   const [patientResult, patientsResult, entriesResult, commentsResult, tasksResult, highlightsResult, weightsResult] = await Promise.all([
@@ -40,7 +45,7 @@ export async function getEntry(db: SupabaseClient, entryId: string) {
     .select('*, author:profiles!care_entries_author_id_fkey(full_name, role), entry_versions(*, actor:profiles!entry_versions_actor_id_fkey(full_name))')
     .eq('id', entryId)
     .maybeSingle();
-  return ensure(result.data, result.error, 'Entry not found or denied');
+  return withOrderedVersions(ensure(result.data, result.error, 'Entry not found or denied'));
 }
 
 export async function editEntry(

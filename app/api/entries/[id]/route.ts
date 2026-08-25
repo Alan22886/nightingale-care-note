@@ -29,8 +29,18 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     });
     return NextResponse.json({ version, entry: await getEntry(context.supabase, id) });
   } catch (error) {
-    if (error instanceof ApiError) return NextResponse.json({ error: error.message, details: error.details }, { status: error.status });
+    if (error instanceof ApiError) {
+      let conflict: { current_version?: number; attempted_version?: number } = {};
+      if (error.status === 409 && typeof error.details === 'string') {
+        try { conflict = JSON.parse(error.details); } catch { /* PostgreSQL details are best-effort metadata. */ }
+      }
+      return NextResponse.json({
+        error: error.message,
+        details: error.details,
+        currentVersion: conflict.current_version,
+        attemptedVersion: conflict.attempted_version,
+      }, { status: error.status });
+    }
     throw error;
   }
 }
-

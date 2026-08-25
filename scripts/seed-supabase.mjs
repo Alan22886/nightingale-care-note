@@ -136,7 +136,7 @@ const content = {
   aug24v2: 'HbA1c has increased from 7.1% to 8.3%. Sarah clarified she has continued metformin 500 mg twice daily; the earlier AI statement was incomplete.',
 };
 
-await upsert('care_entries', [
+await insertImmutable('care_entries', [
   { id: ids.apr15, clinic_id: ids.clinicA, patient_id: ids.sarah, author_role: 'clinician', author_id: users.clinician, entry_type: 'doctor_consult', visibility: 'patient', current_version: 1, trust_state: 'Clinician Confirmed', decay_tier: 'compressed', created_at: '2025-04-15T01:35:00Z', updated_at: '2025-04-15T01:35:00Z' },
   { id: ids.feb06, clinic_id: ids.clinicA, patient_id: ids.sarah, author_role: 'system', author_id: null, entry_type: 'ai_doctor_consult_summary', visibility: 'internal', current_version: 1, trust_state: 'Clinician Confirmed', decay_tier: 'summary', created_at: '2026-02-06T07:10:00Z', updated_at: '2026-02-06T07:10:00Z' },
   { id: ids.aug13, clinic_id: ids.clinicA, patient_id: ids.sarah, author_role: 'staff', author_id: users.staff, entry_type: 'nurse_followup', visibility: 'internal', current_version: 1, trust_state: null, decay_tier: 'full', created_at: '2026-08-13T03:20:00Z', updated_at: '2026-08-13T03:20:00Z' },
