@@ -5,7 +5,7 @@ Application data and clinical copy: original synthetic content created for this 
 Runtime and UI dependencies (license verified from installed package metadata):
 - React 19.2.6 — MIT
 - React DOM 19.2.6 — MIT
-- Next.js 16.2.6 — MIT
+- Next.js 16.3.3 — MIT
 - @supabase/supabase-js 2.112.4 — MIT
 - @supabase/ssr 0.12.5 — MIT
 
