@@ -1,0 +1,30 @@
+Nightingale Care Note — Attribution
+
+Application data and clinical copy: original synthetic content created for this prototype. No real patient data or third-party clinical dataset is used.
+
+Runtime and UI dependencies (license verified from installed package metadata):
+- React 19.2.6 — MIT
+- React DOM 19.2.6 — MIT
+- Next.js 16.2.6 — MIT
+- Vinext 1.0.0-beta.3 — MIT
+- Vite 8.0.13 — MIT
+- Tailwind CSS 4.2.1 — MIT
+- Drizzle ORM 0.45.2 — Apache-2.0
+- @openai/sites-vite-plugin 0.2.0 — MIT
+- @cloudflare/vite-plugin 1.37.1 — MIT
+
+Development dependencies (license verified from installed package metadata):
+- TypeScript 5.9.3 — Apache-2.0
+- ESLint 9.39.4 — MIT
+- Drizzle Kit 0.31.10 — MIT
+
+Testing:
+- pytest 9.1.1 — MIT (verify distribution license metadata before external redistribution)
+
+AI / APIs:
+- DeterministicScribeProvider — original mock implementation; no external model call.
+- Optional OpenAI provider interface — not enabled and no model/API content is bundled.
+- OpenAI Codex was used as an AI-assisted development tool.
+
+Assets:
+- No stock imagery, generated imagery, or external icon pack is bundled. The lettermark and interface visuals are original CSS/typography.
