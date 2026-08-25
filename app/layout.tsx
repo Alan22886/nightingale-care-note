@@ -15,7 +15,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.SITE_ORIGIN ?? 'https://nightingale-care-note-72h.openai.site',
+    process.env.SITE_ORIGIN ??
+      'https://nightingale-care-note-72h.alan2228.chatgpt.site',
   ),
   title: 'Nightingale Care Note',
   description:
