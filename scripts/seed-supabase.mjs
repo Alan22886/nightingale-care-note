@@ -8,9 +8,9 @@ const required = (name) => {
 };
 
 const url = required('NEXT_PUBLIC_SUPABASE_URL');
-const serviceRoleKey = required('SUPABASE_SERVICE_ROLE_KEY');
+const secretKey = required('SUPABASE_SECRET_KEY');
 const demoPassword = required('SUPABASE_DEMO_PASSWORD');
-const supabase = createClient(url, serviceRoleKey, {
+const supabase = createClient(url, secretKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 

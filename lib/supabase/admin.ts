@@ -1,10 +1,10 @@
 import 'server-only';
 import { createClient } from '@supabase/supabase-js';
-import { getPublicSupabaseEnv, getSupabaseServiceRoleKey } from './env';
+import { getPublicSupabaseEnv, getSupabaseSecretKey } from './env';
 
 export function createSupabaseAdminClient() {
   const { url } = getPublicSupabaseEnv();
-  return createClient(url, getSupabaseServiceRoleKey(), {
+  return createClient(url, getSupabaseSecretKey(), {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }

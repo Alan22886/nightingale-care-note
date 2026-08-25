@@ -18,8 +18,8 @@ export function getPublicSupabaseEnv(): PublicSupabaseEnv {
   };
 }
 
-export function getSupabaseServiceRoleKey() {
-  return required('SUPABASE_SERVICE_ROLE_KEY', process.env.SUPABASE_SERVICE_ROLE_KEY);
+export function getSupabaseSecretKey() {
+  return required('SUPABASE_SECRET_KEY', process.env.SUPABASE_SECRET_KEY);
 }
 
 export function getSupabaseDemoPassword() {

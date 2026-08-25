@@ -61,7 +61,7 @@ All displayed records are synthetic. Supabase Auth establishes identity; Postgre
 
 The required provider flow is raw text → name/ID/phone/email/address/DOB redaction → provider → structured validation → care entry. The developer redaction drawer visibly compares the provider boundary before and after. Audit logs never contain note bodies.
 
-The role selector signs into a server-known synthetic Supabase Auth account using a server-only demo password. The browser never receives the service-role key or password, and a client-supplied role is not trusted as authority.
+The role selector signs into a server-known synthetic Supabase Auth account using a server-only demo password. The browser never receives the Supabase secret key or password, and a client-supplied role is not trusted as authority.
 
 ## 6. Importance engine
 

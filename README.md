@@ -53,7 +53,7 @@ python3 -m venv .venv
 
 ## Environment variables
 
-Copy `.env.example` to `.env.local`. Set the public project URL and publishable key, plus the server-only service-role key and a strong shared password used only to provision the synthetic demo accounts. Never expose the service-role key or demo password with a `NEXT_PUBLIC_` prefix, commit `.env.local`, or paste secrets into issue/commit output.
+Copy `.env.example` to `.env.local`. Set the public project URL and publishable key, plus the server-only Supabase secret key and a strong shared password used only to provision the synthetic demo accounts. Never expose the secret key or demo password with a `NEXT_PUBLIC_` prefix, commit `.env.local`, or paste secrets into issue/commit output.
 
 No OpenAI key is required. The deterministic scribe provider is the safe default. `OPENAI_API_KEY`, if enabled, remains server-only; the provider pipeline always calls `redactBeforeProvider()` before invocation and validates structured output before mutation.
 
@@ -68,7 +68,7 @@ supabase db push
 npm run db:seed
 ```
 
-`scripts/seed-supabase.mjs` uses the server-only service-role key to create/reuse five Auth users, two clinics, six patients, and the Sarah Tan story. It never prints credentials. Re-running it preserves immutable care-entry history.
+`scripts/seed-supabase.mjs` uses the server-only secret key to create/reuse five Auth users, two clinics, six patients, and the Sarah Tan story. It never prints credentials. Re-running it preserves immutable care-entry history.
 
 ## Authentication, RBAC, and clinic isolation
 
