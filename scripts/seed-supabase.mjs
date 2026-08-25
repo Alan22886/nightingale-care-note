@@ -42,12 +42,12 @@ const ids = {
 };
 
 const emailByRole = {
-  patient: process.env.SUPABASE_DEMO_PATIENT_EMAIL ?? 'patient@nightingale.demo',
-  staff: process.env.SUPABASE_DEMO_STAFF_EMAIL ?? 'staff@nightingale.demo',
-  clinician: process.env.SUPABASE_DEMO_CLINICIAN_EMAIL ?? 'clinician@nightingale.demo',
-  admin: process.env.SUPABASE_DEMO_ADMIN_EMAIL ?? 'admin@nightingale.demo',
+  patient: process.env.SUPABASE_DEMO_PATIENT_EMAIL || 'patient@nightingale.demo',
+  staff: process.env.SUPABASE_DEMO_STAFF_EMAIL || 'staff@nightingale.demo',
+  clinician: process.env.SUPABASE_DEMO_CLINICIAN_EMAIL || 'clinician@nightingale.demo',
+  admin: process.env.SUPABASE_DEMO_ADMIN_EMAIL || 'admin@nightingale.demo',
   clinicBClinician:
-    process.env.SUPABASE_DEMO_CLINIC_B_EMAIL ?? 'clinician-b@nightingale.demo',
+    process.env.SUPABASE_DEMO_CLINIC_B_EMAIL || 'clinician-b@nightingale.demo',
 };
 
 async function getOrCreateUser(email, role) {

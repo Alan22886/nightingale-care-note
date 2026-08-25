@@ -27,11 +27,11 @@ export class ApiError extends Error {
 }
 
 const DEMO_EMAILS: Record<Role, string> = {
-  patient: process.env.SUPABASE_DEMO_PATIENT_EMAIL ?? 'patient@nightingale.demo',
-  staff: process.env.SUPABASE_DEMO_STAFF_EMAIL ?? 'staff@nightingale.demo',
+  patient: process.env.SUPABASE_DEMO_PATIENT_EMAIL || 'patient@nightingale.demo',
+  staff: process.env.SUPABASE_DEMO_STAFF_EMAIL || 'staff@nightingale.demo',
   clinician:
-    process.env.SUPABASE_DEMO_CLINICIAN_EMAIL ?? 'clinician@nightingale.demo',
-  admin: process.env.SUPABASE_DEMO_ADMIN_EMAIL ?? 'admin@nightingale.demo',
+    process.env.SUPABASE_DEMO_CLINICIAN_EMAIL || 'clinician@nightingale.demo',
+  admin: process.env.SUPABASE_DEMO_ADMIN_EMAIL || 'admin@nightingale.demo',
 };
 
 async function loadProfile(supabase: SupabaseClient, userId: string) {
@@ -81,4 +81,3 @@ export function publicIdentity(profile: AuthProfile) {
     patientId: profile.patientId,
   };
 }
-
