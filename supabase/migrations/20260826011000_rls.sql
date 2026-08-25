@@ -73,7 +73,7 @@ grant select on public.clinics, public.profiles, public.patients, public.care_en
   public.provenance_spans, public.redaction_events, public.ai_scribed_notes,
   public.importance_feedback, public.clinic_importance_weights, public.audit_logs
   to authenticated;
-grant insert on public.care_entries, public.comments, public.tasks to authenticated;
+grant insert on public.comments, public.tasks to authenticated;
 grant update on public.care_entries to authenticated;
 grant update (resolved) on public.comments to authenticated;
 grant update (status, owner_id) on public.tasks to authenticated;

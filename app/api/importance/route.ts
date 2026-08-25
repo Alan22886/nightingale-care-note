@@ -1,4 +1,30 @@
-import { NextResponse } from 'next/server'; import { getDemoIdentity } from '../../../lib/server/demo-auth'; import { apiWeights, recordFeedback, resetWeights } from '../../../lib/server/importance-state'; import type { FeedbackAction, HighlightCategory } from '../../../lib/domain/models';
-const categories=new Set(['lab_abnormality','new_symptom','unresolved_task','medication_change','administrative']);const actions=new Set(['pin','accept','source_open','dismiss']);
-export async function GET(){return NextResponse.json({weights:apiWeights});}
-export async function POST(request:Request){const identity=await getDemoIdentity();if(identity.role==='patient')return NextResponse.json({error:'Patient access denied'},{status:403});const body=await request.json().catch(()=>null) as {category?:HighlightCategory;action?:FeedbackAction;reset?:boolean}|null;if(body?.reset){resetWeights();return NextResponse.json({weights:apiWeights});}if(!body?.category||!body.action||!categories.has(body.category)||!actions.has(body.action))return NextResponse.json({error:'Invalid payload'},{status:400});return NextResponse.json({weights:recordFeedback(body.category,body.action)});}
+import { NextResponse } from 'next/server';
+import type { FeedbackAction } from '../../../lib/domain/models';
+import { ApiError, getAuthContext } from '../../../lib/server/auth';
+import { listWeights, recordFeedback } from '../../../lib/server/repository';
+
+const ACTIONS = new Set<FeedbackAction>(['pin', 'accept', 'source_open', 'dismiss']);
+
+export async function GET() {
+  try {
+    const context = await getAuthContext();
+    return NextResponse.json({ weights: await listWeights(context.supabase) });
+  } catch (error) {
+    if (error instanceof ApiError) return NextResponse.json({ error: error.message }, { status: error.status });
+    throw error;
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const context = await getAuthContext();
+    const body = (await request.json().catch(() => null)) as { highlightId?: string; action?: FeedbackAction } | null;
+    if (!body?.highlightId || !body.action || !ACTIONS.has(body.action)) return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+    const feedback = await recordFeedback(context.supabase, body.highlightId, body.action);
+    return NextResponse.json({ feedback, weights: await listWeights(context.supabase) });
+  } catch (error) {
+    if (error instanceof ApiError) return NextResponse.json({ error: error.message }, { status: error.status });
+    throw error;
+  }
+}
+

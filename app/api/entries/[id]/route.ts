@@ -1,7 +1,36 @@
 import { NextResponse } from 'next/server';
-import { assertCanEdit, AccessDenied } from '../../../../lib/domain/authorization';
-import { VersionConflict } from '../../../../lib/domain/revisions';
-import { getDemoIdentity } from '../../../../lib/server/demo-auth';
-import { revertStoredEntry, store, updateStoredEntry } from '../../../../lib/server/demo-store';
-export async function GET(_:Request,{params}:{params:Promise<{id:string}>}){ const identity=await getDemoIdentity(); const {id}=await params; const entry=store.entries[id]; if(!entry)return NextResponse.json({error:'Not found'},{status:404}); if(identity.role==='patient')return NextResponse.json({error:'Patient access denied'},{status:403}); return NextResponse.json({entry}); }
-export async function PATCH(request:Request,{params}:{params:Promise<{id:string}>}){ const identity=await getDemoIdentity(); const {id}=await params; const entry=store.entries[id]; if(!entry)return NextResponse.json({error:'Not found'},{status:404}); try{ assertCanEdit(identity,entry); const body=await request.json() as {expectedVersion?:number;content?:string;revertFrom?:number}; if(body.revertFrom)return NextResponse.json({entry:revertStoredEntry(id,body.revertFrom,identity.id)}); if(typeof body.expectedVersion!=='number'||typeof body.content!=='string'||!body.content.trim())return NextResponse.json({error:'Invalid payload'},{status:400}); return NextResponse.json({entry:updateStoredEntry(id,body.expectedVersion,body.content,identity.id)}); }catch(error){ if(error instanceof AccessDenied)return NextResponse.json({error:error.message},{status:403}); if(error instanceof VersionConflict)return NextResponse.json({error:'Version conflict',currentVersion:error.currentVersion,attemptedVersion:error.attemptedVersion},{status:409}); throw error; } }
+import { ApiError, getAuthContext } from '../../../../lib/server/auth';
+import { editEntry, getEntry } from '../../../../lib/server/repository';
+
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const context = await getAuthContext();
+    const { id } = await params;
+    return NextResponse.json({ entry: await getEntry(context.supabase, id) });
+  } catch (error) {
+    if (error instanceof ApiError) return NextResponse.json({ error: error.message }, { status: error.status });
+    throw error;
+  }
+}
+
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const context = await getAuthContext();
+    const { id } = await params;
+    const body = (await request.json().catch(() => null)) as { expectedVersion?: number; content?: string; title?: string; revertFrom?: number } | null;
+    if (!body || typeof body.expectedVersion !== 'number' || (!body.revertFrom && !body.content?.trim())) {
+      return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+    }
+    const version = await editEntry(context.supabase, id, {
+      expectedVersion: body.expectedVersion,
+      content: body.content,
+      title: body.title,
+      revertFrom: body.revertFrom,
+    });
+    return NextResponse.json({ version, entry: await getEntry(context.supabase, id) });
+  } catch (error) {
+    if (error instanceof ApiError) return NextResponse.json({ error: error.message, details: error.details }, { status: error.status });
+    throw error;
+  }
+}
+

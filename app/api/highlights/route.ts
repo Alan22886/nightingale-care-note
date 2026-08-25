@@ -1,2 +1,15 @@
-import { NextResponse } from 'next/server'; import { getDemoIdentity } from '../../../lib/server/demo-auth'; import { apiHighlights, sourceEntries } from '../../../lib/server/highlight-fixtures';
-export async function GET(){const identity=await getDemoIdentity();if(identity.role==='patient')return NextResponse.json({error:'Patient access denied'},{status:403});return NextResponse.json({highlights:apiHighlights,sources:sourceEntries});}
+import { NextResponse } from 'next/server';
+import { ApiError, getAuthContext } from '../../../lib/server/auth';
+import { listHighlights } from '../../../lib/server/repository';
+
+export async function GET(request: Request) {
+  try {
+    const context = await getAuthContext();
+    const patientId = new URL(request.url).searchParams.get('patientId') ?? undefined;
+    return NextResponse.json({ highlights: await listHighlights(context.supabase, patientId) });
+  } catch (error) {
+    if (error instanceof ApiError) return NextResponse.json({ error: error.message }, { status: error.status });
+    throw error;
+  }
+}
+
