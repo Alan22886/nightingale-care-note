@@ -1,12 +1,14 @@
 # Nightingale Care Note — 4–6 Minute Demo
 
+Production: <https://nightingale-care-note.vercel.app>
+
 ## Opening · 20–30 seconds
 
 “Clinicians should not have to reread six months of fragmented history before every consultation. Nightingale Care Note turns that history into the three things that matter most now—in under ten seconds—while keeping every AI-surfaced insight verifiable at its source.”
 
 ## Scenario A — Glance and provenance · ~90 seconds
 
-1. Open Sarah Tan as **Dr Marcus Lim · Clinician**.
+1. Open the production URL; Sarah Tan loads as **Dr Marcus Lim · Clinician**.
 2. Pause on the exactly three priorities: HbA1c 7.1 → 8.3, dizziness after medication change, renal labs pending.
 3. Open **Why this?** on dizziness. Point out that each reason comes from the deterministic scoring components and that the clinic multiplier is bounded.
 4. Click **Source**. The timeline scrolls to the AI Patient Session and highlights the exact phrase “dizziness since the medication adjustment last week.”

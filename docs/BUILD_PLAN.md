@@ -2,7 +2,7 @@
 
 The first working prototype was a React/TypeScript Cloudflare Worker site with D1 and a private Sites deployment. It remains preserved at the pre-migration checkpoint below. The active migration replaces its runtime authority with native Next.js, Supabase Auth, Supabase PostgreSQL, and PostgreSQL RLS for deployment on Vercel.
 
-Current validation: the linked Supabase project has all migrations and synthetic Auth/data seed applied. Lint, TypeScript, the native Next.js production build, and all 13 live Supabase-backed micro-tests pass. The private Sites build remains a fallback, not the final submission deployment.
+Current validation: the linked Supabase project has all migrations and synthetic Auth/data seed applied. Lint, TypeScript, the native Next.js production build, and all 13 live Supabase-backed micro-tests pass against <https://nightingale-care-note.vercel.app>. The obsolete D1/Sites runtime has been removed from the active tree after production verification and remains recoverable from Git history.
 
 ## Pre-Supabase working checkpoint
 
@@ -48,6 +48,14 @@ The submission architecture is now fixed as Next.js + TypeScript on Vercel, back
 - Stage A — complete and pushed: Supabase clients/config, relational migrations, RLS policies, transactional functions, repeatable Auth/data seed.
 - Stages B–D — complete and pushed: Supabase repositories, Auth sessions, protected API routes, and existing UI interactions wired to persistent APIs.
 - Stage E — complete: 13/13 live database, RLS, authorization, persistence, revision, concurrency, provenance, learning, ranking, and redaction tests pass.
-- Stage F — in progress: Supabase is configured and verified; Vercel connection/deployment remains.
-- Stage G — intentionally pending until the Supabase/Vercel deployment is verified; the fallback D1/Sites runtime has not been removed.
-- Stage H — architecture and setup documentation updated; final public URL and validation evidence remain pending.
+- Stage F — complete: Supabase environment configuration and the canonical Vercel production deployment are verified.
+- Stage G — complete: obsolete D1/Sites runtime files and dependencies were removed only after the production RLS/persistence suite passed.
+- Stage H — complete: architecture, setup, demo, attribution, public URL, and validation evidence reflect the final deployment.
+
+### Production verification — 26 Aug 2026
+
+- Canonical URL: <https://nightingale-care-note.vercel.app>
+- Vercel deployment: `dpl_BHNFg6cscHStLjAxNbQ6ceCCRm2f`
+- Public smoke check: HTTP 200, HTML response.
+- Live suite: 13/13 tests passed against the deployed application and linked Supabase project.
+- Security evidence: real Supabase Auth sessions, cross-clinic RLS denial, patient visibility restrictions, author-role protections, persistent mutations, deterministic 409 version conflicts, bounded clinic learning, and pre-provider PHI redaction.

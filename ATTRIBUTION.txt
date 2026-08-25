@@ -9,18 +9,10 @@ Runtime and UI dependencies (license verified from installed package metadata):
 - @supabase/supabase-js 2.112.4 — MIT
 - @supabase/ssr 0.12.5 — MIT
 
-Legacy fallback dependencies retained only until Vercel verification:
-- Vinext 1.0.0-beta.3 — MIT
-- Vite 8.0.13 — MIT
-- Tailwind CSS 4.2.1 — MIT
-- Drizzle ORM 0.45.2 — Apache-2.0
-- @openai/sites-vite-plugin 0.2.0 — MIT
-- @cloudflare/vite-plugin 1.37.1 — MIT
-
 Development dependencies (license verified from installed package metadata):
 - TypeScript 5.9.3 — Apache-2.0
 - ESLint 9.39.4 — MIT
-- Drizzle Kit 0.31.10 — MIT
+- Tailwind CSS 4.2.1 — MIT
 
 Testing:
 - pytest 9.1.1 — MIT (verify distribution license metadata before external redistribution)

@@ -115,13 +115,19 @@ Additional tests cover PHI redaction, payload validation, ranking bounds, persis
 
 ## Deployment
 
-Import the GitHub repository into Vercel, keep the framework preset as Next.js, and configure the same Supabase values in Vercel Project Settings → Environment Variables for Production and Preview. Set `NEXT_PUBLIC_SITE_URL` to the final Vercel URL. Apply/seed Supabase before validating the deployment.
+Production is deployed at <https://nightingale-care-note.vercel.app>. The Vercel project uses the Next.js framework preset and the same public Supabase URL/key and server-only demo password in Production and Preview. The Supabase secret key is used only for local provisioning and is not required by the deployed runtime.
+
+To validate another deployment after applying migrations and seeding, set the target URL only for the test process:
+
+```bash
+NIGHTINGALE_BASE_URL=https://your-deployment.example npm run test:micro
+```
 
 ## Known limitations
 
 - Demo role switching uses real Supabase Auth sessions but is intentionally a presentation convenience, not a general sign-in UI.
-- Live Supabase authorization/persistence tests and the Vercel deployment require project credentials and are not represented as complete until run against the configured project.
-- The prior D1/Sites implementation remains in Git history. Its runtime files are retained only as a fallback until the Vercel deployment is verified, then will be removed in the cleanup stage.
+- The production verification completed on 26 Aug 2026: all 13 live authentication, RLS, persistence, revision, concurrency, provenance, learning, ranking, and redaction tests passed against the canonical Vercel URL.
+- The prior D1/Sites implementation remains available in Git history, but its obsolete runtime files and dependencies are no longer part of the active tree.
 - Arbitrary selected-text comments, CRDT editing, production voice transcription, EHR/FHIR integration, and real patient data are intentionally excluded.
 - The optional OpenAI provider adapter is represented by the safe provider interface; only the deterministic provider is enabled in this build.
 
