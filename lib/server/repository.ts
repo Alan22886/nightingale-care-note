@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { isPatientReleased } from '../domain/patient-release';
 import { ApiError, type AuthContext } from './auth';
 
 function ensure<T>(data: T | null, error: { message: string; code?: string } | null, fallback = 'Database operation failed'): T {
@@ -34,7 +35,7 @@ export async function getPatientWorkspace(context: AuthContext, patientId: strin
     identity: context.profile,
     patient,
     patients: ensure(patientsResult.data, patientsResult.error),
-    entries: context.profile.role === 'patient' ? entries.map(withCurrentVersionOnly) : entries,
+    entries: context.profile.role === 'patient' ? entries.filter(isPatientReleased).map(withCurrentVersionOnly) : entries,
     comments: ensure(commentsResult.data, commentsResult.error),
     tasks: ensure(tasksResult.data, tasksResult.error),
     highlights: ensure(highlightsResult.data, highlightsResult.error),

@@ -5,7 +5,8 @@ const RULES: Array<[RedactionCategory, RegExp]> = [
   ['PHONE', /(?:\+65[\s-]?)?[689]\d{3}[\s-]?\d{4}\b/g],
   ['ID', /\b[STFGM]\d{7}[A-Z]\b/gi],
   ['DOB', /\b(?:DOB|date of birth)\s*[:\-]?\s*\d{1,2}[\/-]\d{1,2}[\/-]\d{4}\b/gi],
-  ['ADDRESS', /\b\d{1,4}\s+[A-Za-z][A-Za-z\s]+(?:Road|Rd|Street|St|Avenue|Ave|Lane|Ln|Drive|Dr)\b[^\n,]*/gi],
+  ['ADDRESS', /\b\d{1,4}\s+[A-Za-z][A-Za-z\s]+(?:Road|Rd|Street|St|Avenue|Ave|Lane|Ln|Drive|Dr)\b[^\n,.;]*/gi],
+  ['NAME', /\b(?:Patient|Name)\s*:\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3}\b/g],
   ['NAME', /\bSarah Tan\b/gi],
 ];
 export function redactBeforeProvider(raw: string): RedactionResult {

@@ -5,16 +5,27 @@ export const SCORE_WEIGHTS = {
 } as const;
 export const LEARNING_BOUNDS = { min: 0.8, max: 1.35 } as const;
 
+// Risk is an invariant safety property; importance is a workflow score that may learn.
+// Learned preferences can reorder ordinary work, but cannot push safety-floor items down.
+export function hasDeterministicSafetyFloor(h: Highlight) {
+  return h.level === 'Critical' || h.components.risk >= .9;
+}
+export function safetyRiskFloor(h: Highlight) {
+  return hasDeterministicSafetyFloor(h) ? 12 : 0;
+}
+
 export function baseScore(c: ScoreComponents) {
   return c.risk * SCORE_WEIGHTS.risk + c.unresolved * SCORE_WEIGHTS.unresolved +
     c.recency * SCORE_WEIGHTS.recency + c.clinicalChange * SCORE_WEIGHTS.clinicalChange +
     c.conflict * SCORE_WEIGHTS.conflict + c.confirmation * SCORE_WEIGHTS.confirmation;
 }
 export function scoreHighlight(h: Highlight, multipliers: Record<HighlightCategory, number>) {
-  return baseScore(h.components) * clampMultiplier(multipliers[h.category] ?? 1);
+  const workflowImportance = baseScore(h.components) * clampMultiplier(multipliers[h.category] ?? 1);
+  return Math.max(safetyRiskFloor(h), workflowImportance);
 }
 export function rankHighlights(items: Highlight[], multipliers: Record<HighlightCategory, number>) {
-  return [...items].filter((h) => h.status !== 'dismissed').sort((a, b) => {
+  return [...items].filter((h) => h.status !== 'dismissed' || hasDeterministicSafetyFloor(h)).sort((a, b) => {
+    if (hasDeterministicSafetyFloor(a) !== hasDeterministicSafetyFloor(b)) return hasDeterministicSafetyFloor(a) ? -1 : 1;
     if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
     return scoreHighlight(b, multipliers) - scoreHighlight(a, multipliers);
   });
