@@ -16,7 +16,7 @@ export async function getPatientWorkspace(context: AuthContext, patientId: strin
   const db = context.supabase;
   const [patientResult, patientsResult, entriesResult, commentsResult, tasksResult, highlightsResult, weightsResult] = await Promise.all([
     db.from('patients').select('*').eq('id', patientId).maybeSingle(),
-    db.from('patients').select('id, external_id, full_name, summary').order('full_name'),
+    db.from('patients').select('id, external_id, full_name, date_of_birth, summary, conditions').not('external_id', 'like', 'QA-%').order('full_name'),
     db.from('care_entries').select('*, author:profiles!care_entries_author_id_fkey(full_name, role), entry_versions(*, actor:profiles!entry_versions_actor_id_fkey(full_name))').eq('patient_id', patientId).order('created_at', { ascending: false }),
     db.from('comments').select('*, author:profiles!comments_author_id_fkey(full_name, role)').eq('patient_id', patientId).order('created_at'),
     db.from('tasks').select('*, owner:profiles!tasks_owner_id_fkey(full_name, role)').eq('patient_id', patientId).order('created_at'),
@@ -37,6 +37,23 @@ export async function getPatientWorkspace(context: AuthContext, patientId: strin
       ensure(weightsResult.data, weightsResult.error).map((row) => [row.category, Number(row.multiplier)]),
     ),
   };
+}
+
+export async function getPatientsDirectory(context: AuthContext) {
+  const db = context.supabase;
+  const [patientsResult, tasksResult, highlightsResult] = await Promise.all([
+    db.from('patients').select('id, external_id, full_name, date_of_birth, summary, conditions').not('external_id', 'like', 'QA-%').order('full_name'),
+    db.from('tasks').select('patient_id, title, status, created_at').neq('status', 'Done').order('created_at', { ascending: false }),
+    db.from('highlights').select('patient_id, severity, status').neq('status', 'dismissed'),
+  ]);
+  const patients = ensure(patientsResult.data, patientsResult.error);
+  const tasks = ensure(tasksResult.data, tasksResult.error);
+  const highlights = ensure(highlightsResult.data, highlightsResult.error);
+  return patients.map((patient) => ({
+    ...patient,
+    active_priorities: highlights.filter((item) => item.patient_id === patient.id).length,
+    next_follow_up: tasks.find((task) => task.patient_id === patient.id) ?? null,
+  }));
 }
 
 export async function getEntry(db: SupabaseClient, entryId: string) {

@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import './interactions.css';
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -28,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-scroll-behavior="smooth">
       <body>{children}</body>
     </html>
   );

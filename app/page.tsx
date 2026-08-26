@@ -1,3 +1,5 @@
-import Workspace from './workspace';
-export const dynamic = 'force-dynamic';
-export default function Home() { return <Workspace />; }
+import { redirect } from 'next/navigation';
+
+export default function Home() {
+  redirect('/patients/20000000-0000-4000-8000-000000000001');
+}
