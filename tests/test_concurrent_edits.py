@@ -1,7 +1,7 @@
 from api_client import Client
 
-CLINICIAN_ENTRY='30000000-0000-4000-8000-000000000005'
-STAFF_ENTRY='30000000-0000-4000-8000-000000000003'
+CLINICIAN_ENTRY='30000000-0000-4000-8000-000000000006'
+STAFF_ENTRY='30000000-0000-4000-8000-000000000007'
 
 def test_different_sections_update_independently():
     clinician=Client().role('clinician'); staff=Client().role('staff')

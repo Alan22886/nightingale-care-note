@@ -1,5 +1,5 @@
 from api_client import Client
-CLINICIAN_ENTRY='30000000-0000-4000-8000-000000000005'
+CLINICIAN_ENTRY='30000000-0000-4000-8000-000000000006'
 def test_versions_order_revert_and_audit():
     c=Client().role('clinician'); status,p=c.request(f'/api/entries/{CLINICIAN_ENTRY}'); assert status==200
     baseline=p['entry']['current_version']; old=p['entry']['entry_versions'][0]['content']

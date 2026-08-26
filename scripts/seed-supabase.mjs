@@ -23,6 +23,7 @@ const ids = {
   daniel: '20000000-0000-4000-8000-000000000004',
   farah: '20000000-0000-4000-8000-000000000005',
   clinicBPatient: '20000000-0000-4000-8000-000000000006',
+  qaPatient: '20000000-0000-4000-8000-000000000007',
   apr15: '30000000-0000-4000-8000-000000000001',
   feb06: '30000000-0000-4000-8000-000000000002',
   aug13: '30000000-0000-4000-8000-000000000003',
@@ -38,6 +39,12 @@ const ids = {
   dizziness: '40000000-0000-4000-8000-000000000002',
   renal: '40000000-0000-4000-8000-000000000003',
   medication: '40000000-0000-4000-8000-000000000004',
+  qaClinicianEntry: '30000000-0000-4000-8000-000000000006',
+  qaStaffEntry: '30000000-0000-4000-8000-000000000007',
+  qaClinicianVersion: '31000000-0000-4000-8000-000000000007',
+  qaStaffVersion: '31000000-0000-4000-8000-000000000008',
+  qaHighlight: '40000000-0000-4000-8000-000000000005',
+  qaTask: '60000000-0000-4000-8000-000000000002',
   redaction: '70000000-0000-4000-8000-000000000001',
 };
 
@@ -117,6 +124,7 @@ await upsert('patients', [
   { id: ids.daniel, clinic_id: ids.clinicA, external_id: 'DK-0974', full_name: 'Daniel Koh', date_of_birth: '1991-07-03', summary: 'Follow-up', conditions: ['Migraine'] },
   { id: ids.farah, clinic_id: ids.clinicA, external_id: 'FA-3401', full_name: 'Farah Aziz', date_of_birth: '1978-09-27', summary: 'Annual review', conditions: ['Hypertension'] },
   { id: ids.clinicBPatient, clinic_id: ids.clinicB, external_id: 'EW-1001', full_name: 'Eleanor Wong', date_of_birth: '1980-01-16', summary: 'Clinic B isolation fixture', conditions: ['Type 2 diabetes'] },
+  { id: ids.qaPatient, clinic_id: ids.clinicA, external_id: 'QA-0001', full_name: 'Automated Test Patient', date_of_birth: '1990-01-01', summary: 'Isolated persistence fixture', conditions: ['Test fixture — not for display'] },
 ]);
 
 await upsert('profiles', [
@@ -152,6 +160,125 @@ await insertImmutable('entry_versions', [
   { id: ids.aug24v1, care_entry_id: ids.aug24, version: 1, title: 'Diabetes review and treatment plan', content: content.aug24v1, actor_id: users.clinician, created_at: '2026-08-24T08:18:00Z' },
   { id: ids.aug24v2, care_entry_id: ids.aug24, version: 2, title: 'Diabetes review and treatment plan', content: content.aug24v2, actor_id: users.clinician, created_at: '2026-08-25T06:32:00Z' },
 ]);
+
+const miniStories = [
+  {
+    patientId: ids.jason,
+    entries: [
+      { title: 'Asthma control review', content: 'Night-time wheeze has increased to twice weekly. Inhaler technique reviewed and spacer use reinforced.', type: 'doctor_consult', role: 'clinician', visibility: 'patient', trust: 'Clinician Confirmed', at: '2026-08-20T02:20:00Z' },
+      { title: 'Telephone follow-up', content: 'No urgent breathlessness reported. Follow-up is booked after two weeks of regular preventer use.', type: 'nurse_followup', role: 'staff', visibility: 'patient', trust: null, at: '2026-08-25T03:10:00Z' },
+    ],
+    highlights: [
+      { title: 'Night-time wheeze increasing', detail: 'Now occurring twice weekly', category: 'new_symptom', severity: 'Attention', trust: 'Clinician Confirmed', entry: 0, excerpt: 'Night-time wheeze has increased to twice weekly' },
+      { title: 'Technique review completed', detail: 'Spacer use reinforced at latest visit', category: 'medication_change', severity: 'Follow-up', trust: 'Clinician Confirmed', entry: 0, excerpt: 'Inhaler technique reviewed and spacer use reinforced' },
+    ],
+    task: 'Review symptom diary after regular preventer use',
+  },
+  {
+    patientId: ids.mei,
+    entries: [
+      { title: 'Lipid therapy review', content: 'LDL cholesterol remains above the agreed target. Mei reports muscle aches after restarting atorvastatin.', type: 'doctor_consult', role: 'clinician', visibility: 'patient', trust: 'Clinician Confirmed', at: '2026-08-18T05:40:00Z' },
+      { title: 'Medication tolerance check', content: 'Muscle symptoms are unchanged but remain mild. Medication review is scheduled before any dose adjustment.', type: 'nurse_followup', role: 'staff', visibility: 'patient', trust: null, at: '2026-08-24T01:45:00Z' },
+    ],
+    highlights: [
+      { title: 'LDL remains above target', detail: 'Requires treatment review', category: 'lab_abnormality', severity: 'Attention', trust: 'Clinician Confirmed', entry: 0, excerpt: 'LDL cholesterol remains above the agreed target' },
+      { title: 'Muscle aches after restart', detail: 'Mild and unchanged at follow-up', category: 'new_symptom', severity: 'Follow-up', trust: 'AI Suggested', entry: 1, excerpt: 'Muscle symptoms are unchanged but remain mild' },
+    ],
+    task: 'Complete medication tolerance review',
+  },
+  {
+    patientId: ids.daniel,
+    entries: [
+      { title: 'Migraine pattern review', content: 'Headache frequency has improved from six to three days monthly. No new neurological warning symptoms reported.', type: 'doctor_consult', role: 'clinician', visibility: 'patient', trust: 'Clinician Confirmed', at: '2026-08-19T07:15:00Z' },
+      { title: 'Trigger diary follow-up', content: 'Sleep disruption remains the most consistent trigger. Daniel will continue the diary until the next review.', type: 'nurse_followup', role: 'staff', visibility: 'patient', trust: null, at: '2026-08-26T00:30:00Z' },
+    ],
+    highlights: [
+      { title: 'Migraine frequency improving', detail: 'Six → three days per month', category: 'new_symptom', severity: 'Follow-up', trust: 'Clinician Confirmed', entry: 0, excerpt: 'Headache frequency has improved from six to three days monthly' },
+      { title: 'Sleep disruption remains a trigger', detail: 'Continue diary until next review', category: 'unresolved_task', severity: 'Follow-up', trust: 'Clinician Confirmed', entry: 1, excerpt: 'Sleep disruption remains the most consistent trigger' },
+    ],
+    task: 'Bring completed migraine trigger diary',
+  },
+  {
+    patientId: ids.farah,
+    entries: [
+      { title: 'Annual hypertension review', content: 'Home blood pressure readings are mostly within target. One elevated evening pattern needs confirmation.', type: 'doctor_consult', role: 'clinician', visibility: 'patient', trust: 'Clinician Confirmed', at: '2026-08-17T02:05:00Z' },
+      { title: 'Home monitoring follow-up', content: 'Farah has recorded morning and evening readings for seven days. The completed log is ready for review.', type: 'nurse_followup', role: 'staff', visibility: 'patient', trust: null, at: '2026-08-25T06:25:00Z' },
+    ],
+    highlights: [
+      { title: 'Evening pressure pattern to confirm', detail: 'Review the completed seven-day log', category: 'lab_abnormality', severity: 'Follow-up', trust: 'AI Suggested', entry: 0, excerpt: 'One elevated evening pattern needs confirmation' },
+      { title: 'Home monitoring complete', detail: 'Seven-day log ready for review', category: 'unresolved_task', severity: 'Follow-up', trust: 'Clinician Confirmed', entry: 1, excerpt: 'The completed log is ready for review' },
+    ],
+    task: 'Review seven-day home blood pressure log',
+  },
+];
+
+let miniEntryIndex = 1;
+let miniHighlightIndex = 1;
+for (const story of miniStories) {
+  const storyEntries = story.entries.map((entry) => {
+    const index = miniEntryIndex++;
+    return {
+      ...entry,
+      id: `32000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+      versionId: `32100000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+    };
+  });
+  await insertImmutable('care_entries', storyEntries.map((entry) => ({
+    id: entry.id, clinic_id: ids.clinicA, patient_id: story.patientId,
+    author_role: entry.role, author_id: entry.role === 'clinician' ? users.clinician : users.staff,
+    entry_type: entry.type, visibility: entry.visibility, current_version: 1,
+    trust_state: entry.trust, decay_tier: 'full', created_at: entry.at, updated_at: entry.at,
+  })));
+  await insertImmutable('entry_versions', storyEntries.map((entry) => ({
+    id: entry.versionId, care_entry_id: entry.id, version: 1, title: entry.title,
+    content: entry.content, actor_id: entry.role === 'clinician' ? users.clinician : users.staff,
+    created_at: entry.at,
+  })));
+  for (const highlight of story.highlights) {
+    const index = miniHighlightIndex++;
+    const source = storyEntries[highlight.entry];
+    const highlightId = `42000000-0000-4000-8000-${String(index).padStart(12, '0')}`;
+    await upsert('highlights', [{
+      id: highlightId, clinic_id: ids.clinicA, patient_id: story.patientId,
+      category: highlight.category, title: highlight.title, detail: highlight.detail,
+      severity: highlight.severity, trust_state: highlight.trust, status: 'suggested', pinned: false,
+      score_components: { risk: .45, unresolved: .55, recency: .8, clinicalChange: .65, conflict: 0, confirmation: highlight.trust === 'Clinician Confirmed' ? 1 : 0 },
+      occurred_at: source.at,
+    }]);
+    await upsert('provenance_spans', [{
+      id: `42100000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+      highlight_id: highlightId, source_entry_id: source.id, source_version_id: source.versionId,
+      ...span(source.content, highlight.excerpt),
+    }]);
+  }
+  const storyIndex = miniStories.indexOf(story) + 1;
+  await upsert('tasks', [{
+    id: `62000000-0000-4000-8000-${String(storyIndex).padStart(12, '0')}`,
+    clinic_id: ids.clinicA, patient_id: story.patientId, source_entry_id: storyEntries.at(-1).id,
+    title: story.task, owner_id: users.staff, status: 'Open', patient_visible: true,
+    created_at: storyEntries.at(-1).at,
+  }]);
+  await upsert('comments', [{
+    id: `52000000-0000-4000-8000-${String(storyIndex).padStart(12, '0')}`,
+    clinic_id: ids.clinicA, patient_id: story.patientId, entry_id: storyEntries.at(-1).id,
+    author_id: users.staff, body: 'Follow-up context reviewed with the care team.', internal: true,
+    resolved: false, created_at: storyEntries.at(-1).at,
+  }]);
+}
+
+const qaClinicianContent = 'Isolated clinician persistence fixture. This record never appears in the demo directory.';
+const qaStaffContent = 'Isolated staff persistence fixture for comments, tasks, and author ownership checks.';
+await insertImmutable('care_entries', [
+  { id: ids.qaClinicianEntry, clinic_id: ids.clinicA, patient_id: ids.qaPatient, author_role: 'clinician', author_id: users.clinician, entry_type: 'doctor_consult', visibility: 'internal', current_version: 1, trust_state: 'Clinician Confirmed', decay_tier: 'full', created_at: '2026-08-01T00:00:00Z', updated_at: '2026-08-01T00:00:00Z' },
+  { id: ids.qaStaffEntry, clinic_id: ids.clinicA, patient_id: ids.qaPatient, author_role: 'staff', author_id: users.staff, entry_type: 'nurse_followup', visibility: 'internal', current_version: 1, trust_state: null, decay_tier: 'full', created_at: '2026-08-01T00:05:00Z', updated_at: '2026-08-01T00:05:00Z' },
+]);
+await insertImmutable('entry_versions', [
+  { id: ids.qaClinicianVersion, care_entry_id: ids.qaClinicianEntry, version: 1, title: 'QA clinician fixture', content: qaClinicianContent, actor_id: users.clinician, created_at: '2026-08-01T00:00:00Z' },
+  { id: ids.qaStaffVersion, care_entry_id: ids.qaStaffEntry, version: 1, title: 'QA staff fixture', content: qaStaffContent, actor_id: users.staff, created_at: '2026-08-01T00:05:00Z' },
+]);
+await upsert('highlights', [{ id: ids.qaHighlight, clinic_id: ids.clinicA, patient_id: ids.qaPatient, category: 'administrative', title: 'QA persistence signal', detail: 'Hidden automated test fixture', severity: 'Follow-up', trust_state: 'Clinician Confirmed', status: 'suggested', pinned: false, score_components: { risk: 0, unresolved: .2, recency: .5, clinicalChange: 0, conflict: 0, confirmation: 1 }, occurred_at: '2026-08-01T00:00:00Z' }]);
+await upsert('provenance_spans', [{ id: '41000000-0000-4000-8000-000000000005', highlight_id: ids.qaHighlight, source_entry_id: ids.qaClinicianEntry, source_version_id: ids.qaClinicianVersion, ...span(qaClinicianContent, 'Isolated clinician persistence fixture') }]);
+await upsert('tasks', [{ id: ids.qaTask, clinic_id: ids.clinicA, patient_id: ids.qaPatient, source_entry_id: ids.qaStaffEntry, title: 'QA persistence task', owner_id: users.staff, status: 'Open', patient_visible: false, created_at: '2026-08-01T00:05:00Z' }]);
 
 await upsert('redaction_events', [{ id: ids.redaction, clinic_id: ids.clinicA, categories: ['NAME', 'ID', 'PHONE'], provider: 'mock', created_at: '2026-08-23T12:03:00Z' }]);
 await upsert('ai_scribed_notes', [
@@ -191,7 +318,7 @@ await upsert('clinic_importance_weights', [
 console.log(JSON.stringify({
   seeded: true,
   clinics: 2,
-  patients: 6,
+  patients: 7,
   demoUsers: Object.keys(users),
   note: 'No password or service key was written to output.',
 }, null, 2));
