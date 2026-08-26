@@ -114,6 +114,16 @@ export async function recordFeedback(db: SupabaseClient, highlightId: string, ac
   return data;
 }
 
+export async function restoreHighlightState(db: SupabaseClient, highlightId: string, status: string, pinned: boolean) {
+  const { data, error } = await db.rpc('restore_highlight_state', {
+    p_highlight_id: highlightId,
+    p_status: status,
+    p_pinned: pinned,
+  });
+  if (error) throw new ApiError(error.code === '42501' ? 403 : 400, error.message);
+  return data;
+}
+
 export async function listWeights(db: SupabaseClient) {
   const { data, error } = await db.from('clinic_importance_weights').select('category, multiplier');
   return Object.fromEntries(

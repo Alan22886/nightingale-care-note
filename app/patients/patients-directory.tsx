@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import type { Role } from '../../lib/domain/models';
+import { IdentityAccessPanel, IdentityControl, orderPatients, SearchIcon } from '../identity-access';
 
 type Patient = {
   id: string;
@@ -15,13 +16,6 @@ type Patient = {
   active_priorities: number;
   next_follow_up: { title: string; status: string } | null;
 };
-
-const roles: Array<{ role: Role; name: string; label: string }> = [
-  { role: 'clinician', name: 'Dr Marcus Lim', label: 'Clinician' },
-  { role: 'staff', name: 'Nurse Alice Wong', label: 'Staff' },
-  { role: 'patient', name: 'Sarah Tan', label: 'Patient' },
-  { role: 'admin', name: 'Clinic Admin', label: 'Admin' },
-];
 
 const portraitIndex: Record<string, number> = {
   'Sarah Tan': 0,
@@ -50,6 +44,7 @@ export default function PatientsDirectory() {
   const [pending, setPending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [accessOpen, setAccessOpen] = useState(false);
 
   async function load() {
     let response = await fetch('/api/patients', { cache: 'no-store' });
@@ -84,20 +79,19 @@ export default function PatientsDirectory() {
 
   const visible = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    if (!normalized) return patients;
-    return patients.filter((patient) => [patient.full_name, patient.external_id, patient.summary, ...patient.conditions].join(' ').toLowerCase().includes(normalized));
+    const ordered = orderPatients(patients);
+    if (!normalized) return ordered;
+    return ordered.filter((patient) => [patient.full_name, patient.external_id, patient.summary, ...patient.conditions].join(' ').toLowerCase().includes(normalized));
   }, [patients, query]);
-
-  const identity = roles.find((item) => item.role === role) ?? roles[0];
 
   return <main className="directory-shell">
     <header className="topbar directory-topbar">
       <Link className="brand" href="/patients"><Image className="brand-mark" src="/brand/nightingale-mark.png" width={30} height={30} alt="" priority/><span>Nightingale</span></Link>
       <nav className="topnav" aria-label="Primary"><Link className="active" href="/patients">Patients</Link></nav>
-      <label className={`role-switch ${pending ? 'is-pending' : ''}`}><span>{pending ? 'Changing view…' : 'Viewing as'}</span><strong>{identity.name} · {identity.label}</strong><select disabled={pending} value={role} onChange={(event) => void switchRole(event.target.value as Role)} aria-label="Change viewing role">{roles.map((item) => <option key={item.role} value={item.role}>{item.name} · {item.label}</option>)}</select></label>
+      <IdentityControl role={role} pending={pending} onRoleChange={(next) => void switchRole(next)} onOpenAccess={() => setAccessOpen(true)}/>
     </header>
     <section className="directory-content">
-      <div className="directory-heading"><div><span className="eyebrow">Harbour Family Clinic</span><h1>Patients</h1><p>Open a longitudinal Care Note or find a patient by name, ID, or condition.</p></div><label className="patient-search"><span aria-hidden="true">⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search patients" aria-label="Search patients"/></label></div>
+      <div className="directory-heading"><div><span className="eyebrow">Harbour Family Clinic</span><h1>Patients</h1><p>Open a longitudinal Care Note or find a patient by name, ID, or condition.</p></div><label className="patient-search"><span><SearchIcon/></span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search patients…" aria-label="Search patients"/></label></div>
       {error && <p className="inline-error">{error}</p>}
       <div className={`directory-grid ${pending ? 'is-pending' : ''}`} aria-busy={loading || pending}>
         {loading && Array.from({ length: 5 }, (_, index) => <div className="patient-directory-card directory-skeleton" key={index} aria-hidden="true"><span className="skeleton skeleton-avatar"/><span><span className="skeleton skeleton-title"/><span className="skeleton skeleton-line"/><span className="skeleton skeleton-line short"/></span></div>)}
@@ -109,5 +103,6 @@ export default function PatientsDirectory() {
       </div>
       {!loading && !visible.length && !error && <div className="empty-state"><strong>No matching patients</strong><span>Try a name, patient ID, or condition.</span></div>}
     </section>
+    {accessOpen && <div className="drawer-backdrop" onClick={() => setAccessOpen(false)}><aside className="drawer" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true"><header><div><span className="eyebrow">Role-based permissions</span><h2>Identity &amp; Access</h2></div><button onClick={() => setAccessOpen(false)} aria-label="Close">×</button></header><IdentityAccessPanel activeRole={role}/></aside></div>}
   </main>;
 }
