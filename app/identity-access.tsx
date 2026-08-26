@@ -5,8 +5,8 @@ import type { Role } from '../lib/domain/models';
 export const roleIdentities: Array<{ role: Role; label: string; name: string }> = [
   { role: 'clinician', label: 'Clinician', name: 'Dr Marcus Lim' },
   { role: 'staff', label: 'Staff', name: 'Nurse Alice Wong' },
-  { role: 'patient', label: 'Patient', name: 'Sarah Tan' },
   { role: 'admin', label: 'Admin', name: 'Clinic Admin' },
+  { role: 'patient', label: 'Patient', name: 'Sarah Tan' },
 ];
 
 const accessByRole: Record<Role, { summary: string; permissions: string[] }> = {
@@ -37,7 +37,14 @@ export function IdentityControl({ role, pending, onRoleChange, onOpenAccess }: {
       <strong>{identity.name}</strong>
       <small>{identity.label} access</small>
       <button type="button" onClick={(event) => { event.currentTarget.closest('details')?.removeAttribute('open'); onOpenAccess(); }}>View Identity &amp; Access</button>
-      <label><span>Demo role switching</span><select disabled={pending} value={role} onChange={(event) => onRoleChange(event.target.value as Role)} aria-label="Change viewing role">{roleIdentities.map((item) => <option key={item.role} value={item.role}>{item.name} · {item.label}</option>)}</select></label>
+      <label><span>Demo role switching</span><select disabled={pending} value={role} onChange={(event) => onRoleChange(event.target.value as Role)} aria-label="Change viewing role">
+        <optgroup label="Clinical workspace">
+          {roleIdentities.filter((item) => item.role !== 'patient').map((item) => <option key={item.role} value={item.role}>{item.name} · {item.label}</option>)}
+        </optgroup>
+        <optgroup label="Patient view">
+          {roleIdentities.filter((item) => item.role === 'patient').map((item) => <option key={item.role} value={item.role}>{item.name} · {item.label}</option>)}
+        </optgroup>
+      </select></label>
     </div>
   </details>;
 }

@@ -6,7 +6,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   try {
     const context = await getAuthContext();
     const { id } = await params;
-    return NextResponse.json({ entry: await getEntry(context.supabase, id) });
+    return NextResponse.json({ entry: await getEntry(context.supabase, id, context.profile.role) });
   } catch (error) {
     if (error instanceof ApiError) return NextResponse.json({ error: error.message }, { status: error.status });
     throw error;
@@ -27,7 +27,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       title: body.title,
       revertFrom: body.revertFrom,
     });
-    return NextResponse.json({ version, entry: await getEntry(context.supabase, id) });
+    return NextResponse.json({ version, entry: await getEntry(context.supabase, id, context.profile.role) });
   } catch (error) {
     if (error instanceof ApiError) {
       let conflict: { current_version?: number; attempted_version?: number } = {};

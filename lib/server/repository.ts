@@ -12,6 +12,10 @@ function withOrderedVersions<T extends { entry_versions?: Array<{ version: numbe
   return entry;
 }
 
+function withCurrentVersionOnly<T extends { current_version: number; entry_versions?: Array<{ version: number }> }>(entry: T): T {
+  return { ...entry, entry_versions: entry.entry_versions?.filter((version) => version.version === entry.current_version) };
+}
+
 export async function getPatientWorkspace(context: AuthContext, patientId: string) {
   const db = context.supabase;
   const [patientResult, patientsResult, entriesResult, commentsResult, tasksResult, highlightsResult, weightsResult] = await Promise.all([
@@ -25,11 +29,12 @@ export async function getPatientWorkspace(context: AuthContext, patientId: strin
   ]);
 
   const patient = ensure(patientResult.data, patientResult.error, 'Patient not found or denied');
+  const entries = ensure(entriesResult.data, entriesResult.error);
   return {
     identity: context.profile,
     patient,
     patients: ensure(patientsResult.data, patientsResult.error),
-    entries: ensure(entriesResult.data, entriesResult.error),
+    entries: context.profile.role === 'patient' ? entries.map(withCurrentVersionOnly) : entries,
     comments: ensure(commentsResult.data, commentsResult.error),
     tasks: ensure(tasksResult.data, tasksResult.error),
     highlights: ensure(highlightsResult.data, highlightsResult.error),
@@ -56,13 +61,14 @@ export async function getPatientsDirectory(context: AuthContext) {
   }));
 }
 
-export async function getEntry(db: SupabaseClient, entryId: string) {
+export async function getEntry(db: SupabaseClient, entryId: string, role?: AuthContext['profile']['role']) {
   const result = await db
     .from('care_entries')
     .select('*, author:profiles!care_entries_author_id_fkey(full_name, role), entry_versions(*, actor:profiles!entry_versions_actor_id_fkey(full_name))')
     .eq('id', entryId)
     .maybeSingle();
-  return withOrderedVersions(ensure(result.data, result.error, 'Entry not found or denied'));
+  const entry = withOrderedVersions(ensure(result.data, result.error, 'Entry not found or denied'));
+  return role === 'patient' ? withCurrentVersionOnly(entry) : entry;
 }
 
 export async function editEntry(
