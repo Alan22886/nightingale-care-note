@@ -1,3 +1,4 @@
+/* Nightingale application shell and clinical workspace */
 @import 'tailwindcss';
 
 :root{--ink:#10233f;--text:#27364b;--muted:#68778a;--line:#dce3ec;--soft:#f4f7fb;--brand:#244ab4;--brand-hover:#1d3e99;--brand-soft:#eef2ff;--brand-border:#b9c7ef;--blue:var(--brand);--blue-dark:var(--brand-hover);--blue-soft:var(--brand-soft);--teal:#257e78;--amber:#a55c08;--amber-soft:#fff6e7;--danger:#a84545;--header-h:54px}
