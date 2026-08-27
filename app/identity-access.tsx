@@ -28,23 +28,25 @@ const accessByRole: Record<Role, { summary: string; permissions: string[] }> = {
   },
 };
 
-export function IdentityControl({ role, pending, onRoleChange, onOpenAccess }: { role: Role; pending: boolean; onRoleChange: (role: Role) => void; onOpenAccess: () => void }) {
+export function ChevronIcon() {
+  return <svg className="menu-chevron" viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true"><path d="m4.5 6 3.5 3.5L11.5 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+}
+
+export function IdentityControl({ role, pending, open, onOpenChange, onRoleChange, onOpenAccess }: { role: Role; pending: boolean; open: boolean; onOpenChange: (open: boolean) => void; onRoleChange: (role: Role) => void; onOpenAccess: () => void }) {
   const identity = roleIdentities.find((item) => item.role === role) ?? roleIdentities[0];
-  return <details className={`identity-menu ${pending ? 'is-pending' : ''}`}>
-    <summary><span>{pending ? 'Changing view…' : 'Viewing as'}</span><strong>{identity.name} · {identity.label}</strong></summary>
+  const chooseRole = (next: Role) => {
+    onOpenChange(false);
+    if (next !== role) onRoleChange(next);
+  };
+  return <details className={`identity-menu ${pending ? 'is-pending' : ''}`} open={open} onToggle={(event) => onOpenChange(event.currentTarget.open)}>
+    <summary><span className="identity-summary-copy"><small>{pending ? 'Changing view…' : 'Viewing as'}</small><strong>{identity.name} · {identity.label}</strong></span><ChevronIcon/></summary>
     <div className="identity-menu-panel">
-      <span className="eyebrow">Harbour Family Clinic</span>
-      <strong>{identity.name}</strong>
-      <small>{identity.label} access</small>
-      <button type="button" onClick={(event) => { event.currentTarget.closest('details')?.removeAttribute('open'); onOpenAccess(); }}>View Identity &amp; Access</button>
-      <label><span>Demo role switching</span><select disabled={pending} value={role} onChange={(event) => onRoleChange(event.target.value as Role)} aria-label="Change viewing role">
-        <optgroup label="Clinical workspace">
-          {roleIdentities.filter((item) => item.role !== 'patient').map((item) => <option key={item.role} value={item.role}>{item.name} · {item.label}</option>)}
-        </optgroup>
-        <optgroup label="Patient view">
-          {roleIdentities.filter((item) => item.role === 'patient').map((item) => <option key={item.role} value={item.role}>{item.name} · {item.label}</option>)}
-        </optgroup>
-      </select></label>
+      <header><strong>{identity.name}</strong><small>{identity.label} · Harbour Family Clinic</small></header>
+      <span className="identity-group-label">Clinical workspace</span>
+      <div className="identity-role-list">{roleIdentities.filter((item) => item.role !== 'patient').map((item) => <button type="button" disabled={pending} className={item.role === role ? 'current' : ''} aria-current={item.role === role ? 'true' : undefined} onClick={() => chooseRole(item.role)} key={item.role}><span><strong>{item.name}</strong><small>{item.label}</small></span>{item.role === role && <span className="identity-check" aria-label="Current view">✓</span>}</button>)}</div>
+      <span className="identity-group-label">Patient view</span>
+      <div className="identity-role-list">{roleIdentities.filter((item) => item.role === 'patient').map((item) => <button type="button" disabled={pending} className={item.role === role ? 'current' : ''} aria-current={item.role === role ? 'true' : undefined} onClick={() => chooseRole(item.role)} key={item.role}><span><strong>{item.name}</strong><small>{item.label}</small></span>{item.role === role && <span className="identity-check" aria-label="Current view">✓</span>}</button>)}</div>
+      <button className="identity-access-action" type="button" onClick={() => { onOpenChange(false); onOpenAccess(); }}>Identity &amp; access</button>
     </div>
   </details>;
 }

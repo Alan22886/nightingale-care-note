@@ -35,3 +35,34 @@
 @keyframes capture-pulse{0%,100%{box-shadow:0 0 0 0 #bd414133}50%{box-shadow:0 0 0 6px #bd414100}}
 @media(max-width:820px){.voice-drawer{width:min(640px,100%)}.patient-voice-card{align-items:flex-start;flex-direction:column}.patient-voice-card button{width:100%;height:42px;justify-content:center}.structured-draft dl{grid-template-columns:1fr}.capture-actions,.patient-capture-actions{display:grid;grid-template-columns:1fr}.capture-actions button,.patient-capture-actions button{width:100%;height:42px}.transcript-preview>p{grid-template-columns:1fr;gap:2px}}
 @media(max-width:600px){.voice-drawer{padding:16px}.capture-results>section,.source-segments{padding:13px}.extracted-facts li{grid-template-columns:1fr}.extracted-facts li>span{justify-self:start}.record-controls{width:100%;display:grid;grid-template-columns:1fr 1fr}.record-controls button{height:44px}.capture-options label:first-of-type{align-items:flex-start;flex-direction:column}.capture-options select{width:100%}}
+
+/* Final interaction and typography consistency */
+.eyebrow,.ribbon-label,.patient-section-label,.profile-rail-title,.structured-draft dt,.task-card>span,.redaction-demo>span{text-transform:none}
+.eyebrow,.ribbon-label,.patient-section-label,.profile-rail-title{color:#708097;font-size:12px;font-weight:600;letter-spacing:.025em;line-height:1.35}
+.ribbon-label{color:#66788f}.patient-section-label{color:#627489;font-weight:600}.profile-rail-title{font-weight:600}
+.topnav.progressive-nav{gap:9px;height:auto;color:#738195;font-size:13.5px}
+.topnav.progressive-nav a,.topnav.progressive-nav>span{height:auto;border:0;background:none}
+.topnav.progressive-nav a{color:#69788c}.topnav.progressive-nav a:hover{color:var(--brand);text-decoration:underline;text-underline-offset:3px}
+.topnav.progressive-nav .nav-separator{color:#a2adba;font-size:17px;font-weight:400;cursor:default}
+.topnav.progressive-nav .current{color:var(--ink);font-weight:600;cursor:default}
+.topbar-tools{justify-content:flex-end}
+.demo-menu summary,.identity-menu>summary{display:flex;align-items:center;justify-content:space-between;gap:7px;line-height:1.2;list-style:none}
+.demo-menu summary{padding:8px 9px}.demo-menu summary:after,.identity-menu>summary:after{content:none}
+.demo-menu summary>span{color:inherit;font-size:13px;line-height:1.2}.menu-chevron{flex:none;align-self:center;color:currentColor;transition:transform .14s ease}
+.demo-menu[open] .menu-chevron,.identity-menu[open] .menu-chevron{transform:rotate(180deg)}
+.demo-menu>div,.identity-menu-panel{z-index:55;border:1px solid #d8e0ea;border-radius:11px;background:#fff;box-shadow:0 14px 38px #17345b24;animation:overlay-in .14s ease}
+.identity-menu>summary{min-width:244px;padding:6px 10px 6px 12px;border-color:#d8e0e8;border-radius:9px}
+.identity-summary-copy{min-width:0;display:grid;gap:1px}.identity-menu>summary .identity-summary-copy small{color:#758397;font-size:12px;font-weight:500;line-height:1.2}
+.identity-menu>summary .identity-summary-copy strong{max-width:205px;overflow:hidden;color:var(--ink);font-size:13.5px;font-weight:600;line-height:1.25;text-overflow:ellipsis;white-space:nowrap}
+.identity-menu-panel{top:50px;width:292px;gap:0;padding:8px}
+.identity-menu-panel>header{display:grid;gap:2px;padding:8px 9px 10px;border-bottom:1px solid #e7ebf0}
+.identity-menu-panel>header strong{color:var(--ink);font-size:14px;font-weight:600}.identity-menu-panel>header small{color:#748195;font-size:12px}
+.identity-group-label{padding:11px 9px 5px;color:#7c8999;font-size:11.5px;font-weight:600;letter-spacing:.02em}
+.identity-role-list{display:grid;gap:2px}.identity-menu-panel .identity-role-list>button{min-height:46px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0;padding:7px 9px;border:0;border-radius:7px;background:none;color:inherit;text-align:left;cursor:pointer}
+.identity-menu-panel .identity-role-list>button:hover,.identity-menu-panel .identity-role-list>button:focus-visible{background:#f3f6fa}.identity-menu-panel .identity-role-list>button.current{background:#eef3f9}
+.identity-role-list button>span:first-child{min-width:0;display:grid;gap:1px}.identity-role-list strong{overflow:hidden;color:#263b54;font-size:13px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}.identity-role-list small{color:#788598;font-size:12px;font-weight:400}
+.identity-check{width:20px;height:20px;display:grid;place-items:center;flex:none;border-radius:50%;background:#dfe9f7;color:var(--brand);font-size:12px;font-weight:700}
+.identity-menu-panel>.identity-access-action{width:100%;margin:8px 0 0;padding:10px 9px;border:0;border-top:1px solid #e7ebf0;border-radius:0;background:none;color:#52657c;font-size:12.5px;font-weight:550;text-align:left;cursor:pointer}.identity-menu-panel>.identity-access-action:hover,.identity-menu-panel>.identity-access-action:focus-visible{color:var(--brand)}
+.drawer,.modal{border:1px solid #dce3eb;background:#fafbfd;box-shadow:-18px 0 52px #17345b24}.modal{box-shadow:0 18px 55px #17345b2b}.drawer-backdrop,.modal-backdrop{animation-duration:.14s}
+@keyframes overlay-in{from{opacity:0;transform:translateY(-3px)}}
+@media(max-width:600px){.identity-menu>summary{width:202px;min-width:0}.patient-app .identity-menu>summary{width:190px}.identity-menu>summary .identity-summary-copy strong{max-width:164px}.identity-menu-panel{width:min(292px,calc(100vw - 24px))}}

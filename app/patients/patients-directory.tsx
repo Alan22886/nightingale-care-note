@@ -45,6 +45,7 @@ export default function PatientsDirectory() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [accessOpen, setAccessOpen] = useState(false);
+  const [identityOpen, setIdentityOpen] = useState(false);
 
   async function load() {
     let response = await fetch('/api/patients', { cache: 'no-store' });
@@ -64,6 +65,8 @@ export default function PatientsDirectory() {
   }, []);
 
   async function switchRole(next: Role) {
+    setIdentityOpen(false);
+    setAccessOpen(false);
     setPending(true);
     setError('');
     try {
@@ -87,8 +90,8 @@ export default function PatientsDirectory() {
   return <main className="directory-shell">
     <header className="topbar directory-topbar">
       <Link className="brand" href="/patients"><Image className="brand-mark" src="/brand/nightingale-mark.png" width={30} height={30} alt="" priority/><span>Nightingale</span></Link>
-      <nav className="topnav" aria-label="Primary"><Link className="active" href="/patients">Patients</Link></nav>
-      <IdentityControl role={role} pending={pending} onRoleChange={(next) => void switchRole(next)} onOpenAccess={() => setAccessOpen(true)}/>
+      <nav className="topnav progressive-nav" aria-label="Primary"><span className="current" aria-current="page">Patients</span></nav>
+      <IdentityControl role={role} pending={pending} open={identityOpen} onOpenChange={setIdentityOpen} onRoleChange={(next) => void switchRole(next)} onOpenAccess={() => { setIdentityOpen(false); setAccessOpen(true); }}/>
     </header>
     <section className="directory-content">
       <div className="directory-heading"><div><span className="eyebrow">Harbour Family Clinic</span><h1>Patients</h1><p>Open a longitudinal Care Note or find a patient by name, ID, or condition.</p></div><label className="patient-search"><span><SearchIcon/></span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search patients…" aria-label="Search patients"/></label></div>
@@ -103,6 +106,6 @@ export default function PatientsDirectory() {
       </div>
       {!loading && !visible.length && !error && <div className="empty-state"><strong>No matching patients</strong><span>Try a name, patient ID, or condition.</span></div>}
     </section>
-    {accessOpen && <div className="drawer-backdrop" onClick={() => setAccessOpen(false)}><aside className="drawer" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true"><header><div><span className="eyebrow">Role-based permissions</span><h2>Identity &amp; Access</h2></div><button onClick={() => setAccessOpen(false)} aria-label="Close">×</button></header><IdentityAccessPanel activeRole={role}/></aside></div>}
+    {accessOpen && <div className="drawer-backdrop" onClick={() => setAccessOpen(false)}><aside className="drawer" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true"><header><div><span className="eyebrow">Role-based permissions</span><h2>Identity &amp; access</h2></div><button onClick={() => setAccessOpen(false)} aria-label="Close">×</button></header><IdentityAccessPanel activeRole={role}/></aside></div>}
   </main>;
 }
