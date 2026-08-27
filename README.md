@@ -72,7 +72,7 @@ supabase db push
 npm run db:seed
 ```
 
-`scripts/seed-supabase.mjs` uses the server-only secret key to create/reuse the synthetic users, two clinics, visible demo stories, and hidden `QA-0001`. It never prints credentials. For production hardening fixtures, `npm run db:provision-safety` touches only `QA-0001`; it does not broadly reseed or mutate visible demo patients.
+`scripts/seed-supabase.mjs` uses the server-only secret key to create/reuse the synthetic users, two clinics, visible demo stories, and hidden `QA-0001`. It never prints credentials. For production hardening fixtures, `npm run db:provision-safety` touches only `QA-0001`; `npm run db:cleanup-safety` removes only transient derived QA highlights while preserving immutable draft and audit history. Neither command broadly reseeds or mutates visible demo patients.
 
 ## Authentication, RBAC, and clinic isolation
 

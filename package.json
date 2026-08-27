@@ -14,6 +14,7 @@
     "test:micro": ".venv/bin/python -m pytest tests -q",
     "test:safety": "node --experimental-strip-types --experimental-specifier-resolution=node --test tests/unit/*.test.mjs",
     "benchmark:glance": "node scripts/benchmark-glance.mjs",
+    "db:cleanup-safety": "node --env-file=.env.local scripts/cleanup-safety-qa.mjs",
     "db:provision-safety": "node --env-file=.env.local scripts/provision-safety-fixtures.mjs",
     "db:seed": "node --env-file=.env.local scripts/seed-supabase.mjs"
   },

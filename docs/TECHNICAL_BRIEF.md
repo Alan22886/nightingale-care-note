@@ -85,7 +85,7 @@ Raw and applied deltas are audited. Critical or risk ≥ 0.9 safety-floor items 
 
 `scripts/benchmark-glance.mjs` authenticates through the current Supabase session exchange, reuses the returned cookie, warms the QA-only `/api/highlights` path 15 times, then measures at least 100 successful requests. Every non-200 fails the run. On 27 Aug 2026, the local Next.js server against linked Supabase measured **P50 201.21 ms, P95 231.96 ms, P99 348.09 ms**, with 100/100 HTTP 200 responses. This includes the RLS-governed relational provenance read and server integrity verification; it excludes browser rendering.
 
-The Supabase project is hosted in Mumbai (`ap-south-1`), so Vercel Functions are explicitly placed in Mumbai (`bom1`) rather than the platform's Washington default. This removes an avoidable intercontinental database round trip; final deployed measurements are reported with the release evidence.
+The Supabase project is hosted in Mumbai (`ap-south-1`), so Vercel Functions are explicitly placed in Mumbai (`bom1`) rather than the platform's Washington default. This removes an avoidable intercontinental database round trip. On the clean canonical production QA fixture, the same 15-warm-up/100-request run measured **P50 183.50 ms, P95 233.26 ms, P99 286.16 ms**, with 100/100 HTTP 200 responses and P95 below the 300 ms target.
 
 ## 8. Trade-offs and limitations
 
