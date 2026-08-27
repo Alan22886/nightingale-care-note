@@ -45,6 +45,7 @@ const ids = {
   qaStaffVersion: '31000000-0000-4000-8000-000000000008',
   qaHighlight: '40000000-0000-4000-8000-000000000005',
   qaTask: '60000000-0000-4000-8000-000000000002',
+  qaSafetyHighlight: '40000000-0000-4000-8000-000000000006',
   redaction: '70000000-0000-4000-8000-000000000001',
 };
 
@@ -55,6 +56,7 @@ const emailByRole = {
   admin: process.env.SUPABASE_DEMO_ADMIN_EMAIL || 'admin@nightingale.demo',
   clinicBClinician:
     process.env.SUPABASE_DEMO_CLINIC_B_EMAIL || 'clinician-b@nightingale.demo',
+  qaPatient: process.env.SUPABASE_DEMO_QA_PATIENT_EMAIL || 'qa-patient@nightingale.demo',
 };
 
 async function getOrCreateUser(email, role) {
@@ -110,6 +112,7 @@ const users = {
   clinician: await getOrCreateUser(emailByRole.clinician, 'clinician'),
   admin: await getOrCreateUser(emailByRole.admin, 'admin'),
   clinicBClinician: await getOrCreateUser(emailByRole.clinicBClinician, 'clinician'),
+  qaPatient: await getOrCreateUser(emailByRole.qaPatient, 'patient'),
 };
 
 await upsert('clinics', [
@@ -133,6 +136,7 @@ await upsert('profiles', [
   { id: users.clinician, clinic_id: ids.clinicA, patient_id: null, full_name: 'Dr Marcus Lim', role: 'clinician' },
   { id: users.admin, clinic_id: ids.clinicA, patient_id: null, full_name: 'Clinic Admin', role: 'admin' },
   { id: users.clinicBClinician, clinic_id: ids.clinicB, patient_id: null, full_name: 'Dr Priya Nair', role: 'clinician' },
+  { id: users.qaPatient, clinic_id: ids.clinicA, patient_id: ids.qaPatient, full_name: 'Automated Test Patient', role: 'patient' },
 ]);
 
 const content = {
@@ -145,11 +149,11 @@ const content = {
 };
 
 await insertImmutable('care_entries', [
-  { id: ids.apr15, clinic_id: ids.clinicA, patient_id: ids.sarah, author_role: 'clinician', author_id: users.clinician, entry_type: 'doctor_consult', visibility: 'patient', current_version: 1, trust_state: 'Clinician Confirmed', decay_tier: 'compressed', created_at: '2025-04-15T01:35:00Z', updated_at: '2025-04-15T01:35:00Z' },
-  { id: ids.feb06, clinic_id: ids.clinicA, patient_id: ids.sarah, author_role: 'system', author_id: null, entry_type: 'ai_doctor_consult_summary', visibility: 'internal', current_version: 1, trust_state: 'Clinician Confirmed', decay_tier: 'summary', created_at: '2026-02-06T07:10:00Z', updated_at: '2026-02-06T07:10:00Z' },
-  { id: ids.aug13, clinic_id: ids.clinicA, patient_id: ids.sarah, author_role: 'staff', author_id: users.staff, entry_type: 'nurse_followup', visibility: 'internal', current_version: 1, trust_state: null, decay_tier: 'full', created_at: '2026-08-13T03:20:00Z', updated_at: '2026-08-13T03:20:00Z' },
-  { id: ids.aug23, clinic_id: ids.clinicA, patient_id: ids.sarah, author_role: 'system', author_id: null, entry_type: 'ai_patient_session_summary', visibility: 'internal', current_version: 1, trust_state: 'Conflict Detected', decay_tier: 'full', superseded_by: ids.aug24, created_at: '2026-08-23T12:04:00Z', updated_at: '2026-08-23T12:04:00Z' },
-  { id: ids.aug24, clinic_id: ids.clinicA, patient_id: ids.sarah, author_role: 'clinician', author_id: users.clinician, entry_type: 'doctor_consult', visibility: 'patient', current_version: 2, trust_state: 'Clinician Confirmed', decay_tier: 'full', created_at: '2026-08-24T08:18:00Z', updated_at: '2026-08-25T06:32:00Z' },
+  { id: ids.apr15, clinic_id: ids.clinicA, patient_id: ids.sarah, author_role: 'clinician', author_id: users.clinician, entry_type: 'doctor_consult', visibility: 'patient', release_state: 'released', current_version: 1, trust_state: 'Clinician Confirmed', decay_tier: 'compressed', created_at: '2025-04-15T01:35:00Z', updated_at: '2025-04-15T01:35:00Z' },
+  { id: ids.feb06, clinic_id: ids.clinicA, patient_id: ids.sarah, author_role: 'system', author_id: null, entry_type: 'ai_doctor_consult_summary', visibility: 'internal', release_state: 'internal', current_version: 1, trust_state: 'Clinician Confirmed', decay_tier: 'summary', created_at: '2026-02-06T07:10:00Z', updated_at: '2026-02-06T07:10:00Z' },
+  { id: ids.aug13, clinic_id: ids.clinicA, patient_id: ids.sarah, author_role: 'staff', author_id: users.staff, entry_type: 'nurse_followup', visibility: 'internal', release_state: 'internal', current_version: 1, trust_state: null, decay_tier: 'full', created_at: '2026-08-13T03:20:00Z', updated_at: '2026-08-13T03:20:00Z' },
+  { id: ids.aug23, clinic_id: ids.clinicA, patient_id: ids.sarah, author_role: 'system', author_id: null, entry_type: 'ai_patient_session_summary', visibility: 'internal', release_state: 'internal', current_version: 1, trust_state: 'Conflict Detected', decay_tier: 'full', superseded_by: ids.aug24, created_at: '2026-08-23T12:04:00Z', updated_at: '2026-08-23T12:04:00Z' },
+  { id: ids.aug24, clinic_id: ids.clinicA, patient_id: ids.sarah, author_role: 'clinician', author_id: users.clinician, entry_type: 'doctor_consult', visibility: 'patient', release_state: 'released', current_version: 2, trust_state: 'Clinician Confirmed', decay_tier: 'full', created_at: '2026-08-24T08:18:00Z', updated_at: '2026-08-25T06:32:00Z' },
 ]);
 
 await insertImmutable('entry_versions', [
@@ -226,7 +230,7 @@ for (const story of miniStories) {
   await insertImmutable('care_entries', storyEntries.map((entry) => ({
     id: entry.id, clinic_id: ids.clinicA, patient_id: story.patientId,
     author_role: entry.role, author_id: entry.role === 'clinician' ? users.clinician : users.staff,
-    entry_type: entry.type, visibility: entry.visibility, current_version: 1,
+    entry_type: entry.type, visibility: entry.visibility, release_state: entry.visibility === 'patient' ? 'released' : 'internal', current_version: 1,
     trust_state: entry.trust, decay_tier: 'full', created_at: entry.at, updated_at: entry.at,
   })));
   await insertImmutable('entry_versions', storyEntries.map((entry) => ({
@@ -269,15 +273,34 @@ for (const story of miniStories) {
 const qaClinicianContent = 'Isolated clinician persistence fixture. This record never appears in the demo directory.';
 const qaStaffContent = 'Isolated staff persistence fixture for comments, tasks, and author ownership checks.';
 await insertImmutable('care_entries', [
-  { id: ids.qaClinicianEntry, clinic_id: ids.clinicA, patient_id: ids.qaPatient, author_role: 'clinician', author_id: users.clinician, entry_type: 'doctor_consult', visibility: 'internal', current_version: 1, trust_state: 'Clinician Confirmed', decay_tier: 'full', created_at: '2026-08-01T00:00:00Z', updated_at: '2026-08-01T00:00:00Z' },
-  { id: ids.qaStaffEntry, clinic_id: ids.clinicA, patient_id: ids.qaPatient, author_role: 'staff', author_id: users.staff, entry_type: 'nurse_followup', visibility: 'internal', current_version: 1, trust_state: null, decay_tier: 'full', created_at: '2026-08-01T00:05:00Z', updated_at: '2026-08-01T00:05:00Z' },
+  { id: ids.qaClinicianEntry, clinic_id: ids.clinicA, patient_id: ids.qaPatient, author_role: 'clinician', author_id: users.clinician, entry_type: 'doctor_consult', visibility: 'internal', release_state: 'internal', current_version: 1, trust_state: 'Clinician Confirmed', decay_tier: 'full', created_at: '2026-08-01T00:00:00Z', updated_at: '2026-08-01T00:00:00Z' },
+  { id: ids.qaStaffEntry, clinic_id: ids.clinicA, patient_id: ids.qaPatient, author_role: 'staff', author_id: users.staff, entry_type: 'nurse_followup', visibility: 'internal', release_state: 'internal', current_version: 1, trust_state: null, decay_tier: 'full', created_at: '2026-08-01T00:05:00Z', updated_at: '2026-08-01T00:05:00Z' },
 ]);
 await insertImmutable('entry_versions', [
   { id: ids.qaClinicianVersion, care_entry_id: ids.qaClinicianEntry, version: 1, title: 'QA clinician fixture', content: qaClinicianContent, actor_id: users.clinician, created_at: '2026-08-01T00:00:00Z' },
   { id: ids.qaStaffVersion, care_entry_id: ids.qaStaffEntry, version: 1, title: 'QA staff fixture', content: qaStaffContent, actor_id: users.staff, created_at: '2026-08-01T00:05:00Z' },
 ]);
+const qaReleaseFixtures = [
+  { id: '33000000-0000-4000-8000-000000000001', versionId: '33100000-0000-4000-8000-000000000001', title: 'QA released fixture', content: 'Released clinician-approved QA content.', trust: 'Clinician Confirmed', release: 'released', visibility: 'patient' },
+  { id: '33000000-0000-4000-8000-000000000002', versionId: '33100000-0000-4000-8000-000000000002', title: 'QA AI suggested fixture', content: 'AI Suggested QA content must remain inaccessible.', trust: 'AI Suggested', release: 'internal', visibility: 'patient' },
+  { id: '33000000-0000-4000-8000-000000000003', versionId: '33100000-0000-4000-8000-000000000003', title: 'QA conflict fixture', content: 'Conflict Detected QA content must remain inaccessible.', trust: 'Conflict Detected', release: 'review_required', visibility: 'patient' },
+  { id: '33000000-0000-4000-8000-000000000004', versionId: '33100000-0000-4000-8000-000000000004', title: 'QA needs review fixture', content: 'Needs Review QA content must remain inaccessible.', trust: 'Needs Review', release: 'review_required', visibility: 'patient' },
+  { id: '33000000-0000-4000-8000-000000000005', versionId: '33100000-0000-4000-8000-000000000005', title: 'QA internal fixture', content: 'Internal QA content must remain inaccessible.', trust: 'Clinician Confirmed', release: 'internal', visibility: 'internal' },
+];
+await insertImmutable('care_entries', qaReleaseFixtures.map((fixture) => ({
+  id: fixture.id, clinic_id: ids.clinicA, patient_id: ids.qaPatient,
+  author_role: 'clinician', author_id: users.clinician, entry_type: 'doctor_consult',
+  visibility: fixture.visibility, release_state: fixture.release, current_version: 1,
+  trust_state: fixture.trust, decay_tier: 'full', created_at: '2026-08-01T00:10:00Z', updated_at: '2026-08-01T00:10:00Z',
+})));
+await insertImmutable('entry_versions', qaReleaseFixtures.map((fixture) => ({
+  id: fixture.versionId, care_entry_id: fixture.id, version: 1, title: fixture.title,
+  content: fixture.content, actor_id: users.clinician, created_at: '2026-08-01T00:10:00Z',
+})));
 await upsert('highlights', [{ id: ids.qaHighlight, clinic_id: ids.clinicA, patient_id: ids.qaPatient, category: 'administrative', title: 'QA persistence signal', detail: 'Hidden automated test fixture', severity: 'Follow-up', trust_state: 'Clinician Confirmed', status: 'suggested', pinned: false, score_components: { risk: 0, unresolved: .2, recency: .5, clinicalChange: 0, conflict: 0, confirmation: 1 }, occurred_at: '2026-08-01T00:00:00Z' }]);
+await upsert('highlights', [{ id: ids.qaSafetyHighlight, clinic_id: ids.clinicA, patient_id: ids.qaPatient, category: 'allergy', title: 'QA safety-floor signal', detail: 'Hidden safety-floor interaction fixture', severity: 'Critical', trust_state: 'AI Suggested', status: 'suggested', pinned: false, score_components: { risk: .95, unresolved: 1, recency: .5, clinicalChange: .5, conflict: 0, confirmation: 0 }, occurred_at: '2026-08-01T00:01:00Z' }]);
 await upsert('provenance_spans', [{ id: '41000000-0000-4000-8000-000000000005', highlight_id: ids.qaHighlight, source_entry_id: ids.qaClinicianEntry, source_version_id: ids.qaClinicianVersion, ...span(qaClinicianContent, 'Isolated clinician persistence fixture') }]);
+await upsert('provenance_spans', [{ id: '41000000-0000-4000-8000-000000000006', highlight_id: ids.qaSafetyHighlight, source_entry_id: ids.qaClinicianEntry, source_version_id: ids.qaClinicianVersion, ...span(qaClinicianContent, 'Isolated clinician persistence fixture') }]);
 await upsert('tasks', [{ id: ids.qaTask, clinic_id: ids.clinicA, patient_id: ids.qaPatient, source_entry_id: ids.qaStaffEntry, title: 'QA persistence task', owner_id: users.staff, status: 'Open', patient_visible: false, created_at: '2026-08-01T00:05:00Z' }]);
 
 await upsert('redaction_events', [{ id: ids.redaction, clinic_id: ids.clinicA, categories: ['NAME', 'ID', 'PHONE'], provider: 'mock', created_at: '2026-08-23T12:03:00Z' }]);

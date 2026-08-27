@@ -26,12 +26,15 @@ export class ApiError extends Error {
   }
 }
 
-const DEMO_EMAILS: Record<Role, string> = {
+export type DemoSessionRole = Role | 'qa_patient';
+
+const DEMO_EMAILS: Record<DemoSessionRole, string> = {
   patient: process.env.SUPABASE_DEMO_PATIENT_EMAIL || 'patient@nightingale.demo',
   staff: process.env.SUPABASE_DEMO_STAFF_EMAIL || 'staff@nightingale.demo',
   clinician:
     process.env.SUPABASE_DEMO_CLINICIAN_EMAIL || 'clinician@nightingale.demo',
   admin: process.env.SUPABASE_DEMO_ADMIN_EMAIL || 'admin@nightingale.demo',
+  qa_patient: process.env.SUPABASE_DEMO_QA_PATIENT_EMAIL || 'qa-patient@nightingale.demo',
 };
 
 async function loadProfile(supabase: SupabaseClient, userId: string) {
@@ -59,7 +62,7 @@ export async function getAuthContext(): Promise<AuthContext> {
   return { supabase, profile: await loadProfile(supabase, userId) };
 }
 
-export async function signInAsDemoRole(role: Role): Promise<AuthProfile> {
+export async function signInAsDemoRole(role: DemoSessionRole): Promise<AuthProfile> {
   const email = DEMO_EMAILS[role];
   if (!email) throw new ApiError(400, 'Unsupported demo role');
 

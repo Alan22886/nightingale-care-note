@@ -8,6 +8,11 @@ def test_phi_is_redacted_before_provider_boundary():
         ('Email sarah.tan@example.com', ['sarah.tan@example.com'], ['[EMAIL]']),
         ('DOB: 12/04/1972', ['12/04/1972'], ['[DOB]']),
         ('Lives at 18 Orchard Road.', ['18 Orchard Road'], ['[ADDRESS]']),
+        ('I spoke with Jason Lee yesterday.', ['Jason Lee'], ['[NAME]']),
+        ('Dr Marcus Lim reviewed the medication.', ['Dr Marcus Lim'], ['[NAME]']),
+        ('Jason Lee and Mei Nordin attended together.', ['Jason Lee','Mei Nordin'], ['[NAME]']),
+        ('Lives at 18 Orchard Road\nSingapore 238823', ['18 Orchard Road','238823'], ['[ADDRESS]']),
+        ('{"patient":"Jason Lee","medication":"metformin 500 mg BID"}', ['Jason Lee'], ['[NAME]']),
         ('Patient: Daniel Koh; Sarah Tan S1234567A +65 9123 4567 sarah.tan@example.com DOB: 12/04/1972 18 Orchard Road.', ['Daniel Koh','Sarah Tan','S1234567A','9123 4567','sarah.tan@example.com','12/04/1972','18 Orchard Road'], ['[NAME]','[ID]','[PHONE]','[EMAIL]','[DOB]','[ADDRESS]']),
     ]
     for text,raw_values,tags in cases:

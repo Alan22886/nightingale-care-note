@@ -1,10 +1,11 @@
 export type Role = 'patient' | 'staff' | 'clinician' | 'admin';
 export type HighlightCategory = 'lab_abnormality' | 'new_symptom' | 'unresolved_task' | 'medication_change' | 'administrative';
-export type FeedbackAction = 'pin' | 'accept' | 'source_open' | 'dismiss';
+export type FeedbackAction = 'pin' | 'accept' | 'source_open' | 'dismiss' | 'acknowledge';
 export type HighlightStatus = 'suggested' | 'accepted' | 'dismissed';
 export type TrustState = 'AI Suggested' | 'Clinician Confirmed' | 'Clinician Rejected' | 'Conflict Detected' | 'Superseded' | 'Needs Review';
 export type AssertionKind = 'allergy' | 'medication' | 'dosage' | 'lab' | 'symptom' | 'follow_up';
 export type AssertionReleaseState = 'grounded' | 'needs_review' | 'abstained';
+export type EntryReleaseState = 'internal' | 'review_required' | 'approved' | 'released';
 export type ConflictScope = 'allergy' | 'medication' | 'dosage';
 export type ConflictParticipants = 'ai-human' | 'human-human';
 

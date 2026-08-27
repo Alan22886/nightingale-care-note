@@ -11,9 +11,15 @@ Production: <https://nightingale-care-note.vercel.app>
 1. Open the production URL; Sarah Tan loads as **Dr Marcus Lim · Clinician**.
 2. Pause on the exactly three priorities: HbA1c 7.1 → 8.3, dizziness after medication change, renal labs pending.
 3. Open **Why this?** on dizziness. Point out that each reason comes from the deterministic scoring components and that the clinic multiplier is bounded.
-4. Click **Source**. The timeline scrolls to the AI Patient Session and highlights the exact phrase “dizziness since the medication adjustment last week.”
+4. Click **View evidence**. The timeline scrolls to the AI Patient Session and highlights the exact phrase “dizziness since the medication adjustment last week.”
 5. Point out **AI Suggested** and **Conflict Detected**. The earlier “stopped metformin” statement remains visible, while the Aug 24 clinician clarification is authoritative.
-6. Accept or pin the highlight. Mention that this records feedback without hiding provenance.
+6. Accept or pin an ordinary highlight. For a protected finding, show **Safety floor** and **Acknowledge**; it cannot be misleadingly dismissed.
+
+## Scenario A2 — Runtime scribe safety · ~45 seconds
+
+1. Select **Record consult** as the clinician and run the synthetic capture.
+2. Explain that no microphone or speech-to-text is active: the fixture text is sent to the real `/api/scribe` endpoint.
+3. Show grounded, withheld, and needs-review sections. The generated record remains an internal draft against hidden `QA-0001`, never a released visible-patient fact.
 
 ## Scenario B — Collaboration and audit · ~2 minutes
 

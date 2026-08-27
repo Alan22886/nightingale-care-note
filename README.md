@@ -8,16 +8,17 @@ Nightingale Care Note is an AI-native longitudinal clinical memory and collabora
 
 Open Sarah Tan at `/patients/sarah-tan` (or `/`). The clinician workspace supports:
 
-- exactly three ranked Glance highlights with Source, Accept, Dismiss, Pin, and “Why this?”;
+- exactly three ranked Glance highlights with View evidence, Accept/Acknowledge, Dismiss where safe, Pin, and “Why this?”;
 - source navigation to the immutable care-entry version and exact originating span;
 - clear AI Suggested, Clinician Confirmed, Conflict Detected, and superseded-history states;
 - April 2025, February 2026, and August 2026 longitudinal context plus HbA1c trend;
 - threaded comments, mentions, resolve/unresolve, task ownership, and task status;
 - treatment-plan editing, ordered snapshots, generated diffs, and revert-as-new-version;
 - server-issued demo identities for patient, staff, clinician, and admin views;
-- a patient-facing summary that excludes internal comments and raw AI-scribed notes;
-- a pre-provider redaction demonstration for name, ID, phone, email, address, and DOB;
-- bounded clinic-level importance learning from Source Open, Accept, Pin, and Dismiss.
+- a patient-facing summary whose application filter and PostgreSQL RLS both require explicitly released content;
+- contextual pre-provider redaction for known names, ID, phone, email, address, and DOB;
+- a synthetic Voice Capture UI connected to the real internal-draft `/api/scribe` safety pipeline;
+- bounded clinic-level importance learning from Source Open, Accept, Pin, and ordinary Dismiss; safety-floor findings use Acknowledge.
 
 ## Architecture
 
@@ -26,11 +27,14 @@ The submission architecture is native Next.js 16 + TypeScript on Vercel, backed 
 ```text
 Browser → Next.js on Vercel → authenticated server routes → Supabase PostgreSQL + RLS
 
-Source interaction → PHI redaction → provider abstraction → structured result
-                   → Supabase PostgreSQL → importance engine → Glance View
+Raw consultation text → contextual PHI redaction → deterministic provider
+→ schema validation → critical-token grounding → typed conflict detection
+→ deterministic risk floor → abstention → internal draft + provenance/audit
+
+Stored safe highlights → server provenance verification → importance engine → Glance View
 ```
 
-SQL migrations in `supabase/migrations/` cover clinics, profiles, patients, care entries, immutable versions, comments, tasks, highlights, provenance spans, AI-scribed metadata, importance feedback, clinic weights, audit logs, and redaction events. Transactional PostgreSQL functions implement versioned edit/revert and persistent bounded learning.
+SQL migrations in `supabase/migrations/` cover clinics, profiles, patients, care entries and explicit release states, immutable versions, comments, tasks, highlights, provenance spans, AI-scribed metadata, importance feedback, clinic weights, audit logs, and redaction events. Transactional PostgreSQL functions implement versioned edit/revert, internal scribe-draft persistence, and persistent bounded learning.
 
 ## Setup
 
@@ -55,7 +59,7 @@ python3 -m venv .venv
 
 Copy `.env.example` to `.env.local`. Set the public project URL and publishable key, plus the server-only Supabase secret key and a strong shared password used only to provision the synthetic demo accounts. Never expose the secret key or demo password with a `NEXT_PUBLIC_` prefix, commit `.env.local`, or paste secrets into issue/commit output.
 
-No OpenAI key is required. The deterministic scribe provider is the safe default. `OPENAI_API_KEY`, if enabled, remains server-only; the provider pipeline always calls `redactBeforeProvider()` before invocation and validates structured output before mutation.
+No OpenAI key is required or used. The implemented provider is `deterministic-clinical-v2`. It receives only contextually redacted synthetic text, and its output passes schema, grounding, conflict, risk, provenance, and persistence controls. This build does not contain a live LLM or speech-to-text adapter.
 
 ## Supabase setup, migrations, and seed
 
@@ -68,11 +72,11 @@ supabase db push
 npm run db:seed
 ```
 
-`scripts/seed-supabase.mjs` uses the server-only secret key to create/reuse five Auth users, two clinics, six patients, and the Sarah Tan story. It never prints credentials. Re-running it preserves immutable care-entry history.
+`scripts/seed-supabase.mjs` uses the server-only secret key to create/reuse the synthetic users, two clinics, visible demo stories, and hidden `QA-0001`. It never prints credentials. For production hardening fixtures, `npm run db:provision-safety` touches only `QA-0001`; it does not broadly reseed or mutate visible demo patients.
 
 ## Authentication, RBAC, and clinic isolation
 
-`POST /api/session` maps an allowlisted demo role to a server-known synthetic account and signs in through Supabase Auth using a server-only password. The role value selects an account; it never becomes authorization authority. Every protected route verifies Supabase claims and loads the RLS-visible profile. Policies deny cross-clinic access, patient access to internal comments/raw AI notes/audit data, and cross-author overwrites between staff and clinicians.
+`POST /api/session` maps an allowlisted demo role to a server-known synthetic account and signs in through Supabase Auth using a server-only password. The role value selects an account; it never becomes authorization authority. Every protected route verifies Supabase claims and loads the RLS-visible profile. Policies deny cross-clinic access, patient access to internal comments/raw AI notes/audit data, and cross-author overwrites between staff and clinicians. Patient care-entry SELECT additionally requires ownership, patient visibility, `release_state = released`, a non-AI entry type, and a trust state other than AI Suggested, Conflict Detected, or Needs Review. The application applies the same release predicate as defense in depth.
 
 ## Importance and learning
 
@@ -83,11 +87,13 @@ base = risk + unresolved action + recency + clinical change + conflict + confirm
 final = base × clinic category multiplier
 ```
 
-Human-readable reasons come from the contributing score components. Feedback signals are Pin +3, Accept +2, Source Open +1, Dismiss −2. Each signal nudges a category multiplier by 0.025 and clamps it to 0.80–1.35, preventing preference learning from overwhelming clinical importance.
+Human-readable reasons come from the contributing score components. Feedback signals are Pin +3, Accept +2, Source Open +1, Dismiss −2, and Acknowledge 0. The exposure-aware update is `raw_delta = signal × 0.100 / max(4, prior_signal_count + 1)`. Non-zero stored deltas have a precision floor of 0.001; multipliers are clamped to 0.80–1.35, and raw/applied deltas are audited. Safety-floor findings cannot be dismissed in the UI or database.
+
+Learning adapts workflow ordering, never clinical truth or deterministic safety risk.
 
 ## Provenance, revisions, and concurrency
 
-A highlight stores the source entry, immutable version, start/end offsets, excerpt, and source hash field in the relational schema. Resolution verifies the exact slice. A source click scrolls, expands context, and highlights the cited text.
+A highlight stores the source entry, immutable version, start/end offsets, excerpt, and SHA-256 source hash. The server workspace verifies the source version, exact slice, excerpt, and hash before returning a highlight. Invalid or absent provenance fails closed: the normal claim is withheld and a deduplicated audit event is attempted. An evidence click scrolls, expands context, and highlights the cited text.
 
 Care-entry versions are monotonically increasing full snapshots. Reverting Version 1 creates a later version with `reverted_from = 1`; no history is erased. Updates include an expected version. A stale same-section write receives 409 with current and attempted versions, while independent sections update separately. Audit records contain actor/action/entity/version metadata, never note bodies.
 
@@ -98,6 +104,7 @@ After applying migrations and seeding, run while `npm run dev` is active:
 ```bash
 npm run lint
 npm run typecheck
+npm run test:safety
 npm run test:micro
 npm run build
 npm run benchmark:glance
@@ -111,7 +118,7 @@ The required tests keep their challenge-specified filenames:
 - `test_concurrent_edits.py`
 - `test_self_learning_importance.py`
 
-Additional tests cover PHI redaction, payload validation, ranking bounds, persistence across new sessions, and patient authorization.
+Focused safety tests cover adversarial grounding, contextual PHI redaction, patient release RLS, malformed provenance, typed conflicts, internal scribe persistence, role boundaries, and safety-floor acknowledgement. Live mutations use only hidden `QA-0001`.
 
 ## Deployment
 
@@ -126,15 +133,15 @@ NIGHTINGALE_BASE_URL=https://your-deployment.example npm run test:micro
 ## Known limitations
 
 - Demo role switching uses real Supabase Auth sessions but is intentionally a presentation convenience, not a general sign-in UI.
-- The production verification completed on 26 Aug 2026: all 13 live authentication, RLS, persistence, revision, concurrency, provenance, learning, ranking, and redaction tests passed against the canonical Vercel URL.
+- Runtime Voice Capture remains synthetic: it does not access a microphone or perform speech-to-text. Clinician completion sends synthetic text through `/api/scribe` and persists only an internal `QA-0001` draft; staff/patient previews do not invoke privileged generation.
 - The prior D1/Sites implementation remains available in Git history, but its obsolete runtime files and dependencies are no longer part of the active tree.
 - Arbitrary selected-text comments, CRDT editing, production voice transcription, EHR/FHIR integration, and real patient data are intentionally excluded.
-- The optional OpenAI provider adapter is represented by the safe provider interface; only the deterministic provider is enabled in this build.
+- The provider interface is deliberately narrow; only the deterministic provider is implemented in this build.
 
 ## What we deliberately did not build
 
 - **CRDT collaboration:** section-level optimistic concurrency demonstrates safe clinical conflict behavior with far less complexity.
-- **Full voice pipeline:** Glance, provenance, RBAC, and auditability carry the core product value.
+- **Live voice pipeline:** the UI demonstrates synthetic capture and the real text safety path, but no microphone, transcription, or live LLM is present.
 - **AI-only ranking:** rejected because clinical prioritization must remain interpretable and testable.
 - **Real integrations:** synthetic data keeps the prototype safe and focused on the trust problem.
 

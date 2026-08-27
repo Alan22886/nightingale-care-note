@@ -3,7 +3,7 @@ import type { FeedbackAction, HighlightStatus } from '../../../lib/domain/models
 import { ApiError, getAuthContext } from '../../../lib/server/auth';
 import { listWeights, recordFeedback, restoreHighlightState } from '../../../lib/server/repository';
 
-const ACTIONS = new Set<FeedbackAction>(['pin', 'accept', 'source_open', 'dismiss']);
+const ACTIONS = new Set<FeedbackAction>(['pin', 'accept', 'source_open', 'dismiss', 'acknowledge']);
 
 export async function GET() {
   try {

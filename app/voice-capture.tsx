@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { validateSourceGrounding } from '../lib/domain/assertions';
 
 type CaptureState = 'idle' | 'recording' | 'paused' | 'processing' | 'ready';
 type Notice = (message: string) => void;
@@ -88,7 +87,7 @@ function formatTime(seconds: number) {
 function MicIcon() {
   return <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><rect x="8" y="3" width="8" height="12" rx="4" stroke="currentColor" strokeWidth="1.8"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M9 21h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>;
 }
-function useDemoCapture() {
+function useDemoCapture(autoComplete = true) {
   const [state, setState] = useState<CaptureState>('idle');
   const [seconds, setSeconds] = useState(0);
   useEffect(() => {
@@ -97,28 +96,57 @@ function useDemoCapture() {
     return () => window.clearInterval(timer);
   }, [state]);
   useEffect(() => {
-    if (state !== 'processing') return;
+    if (state !== 'processing' || !autoComplete) return;
     const timer = window.setTimeout(() => setState('ready'), 1300);
     return () => window.clearTimeout(timer);
-  }, [state]);
+  }, [autoComplete, state]);
   function reset() { setSeconds(0); setState('idle'); }
   return { state, seconds, setState, reset };
 }
 
 export function ClinicalVoiceCapture({ role, patientName, clinicianName, onNotice }: { role: 'clinician' | 'staff'; patientName: string; clinicianName: string; onNotice: Notice }) {
-  const capture = useDemoCapture();
+  const capture = useDemoCapture(false);
+  const captureState = capture.state;
+  const setCaptureState = capture.setState;
   const fixture = useMemo(() => fixtureFor(patientName), [patientName]);
-  const firstSource = `${clinicianName}: ${fixture.clinicianLine} ${fixture.patientShortName}: ${fixture.patientLines[0]}`;
-  const firstFact = fixture.facts[0];
-  const sourceStart = Math.max(0, firstSource.toLowerCase().indexOf(fixture.sourceSegments[0].toLowerCase()));
-  const groundedAssertion = validateSourceGrounding({ kind: firstFact.label === 'Medication' ? 'medication' : 'symptom', claim: firstFact.value, sourceText: firstSource, startOffset: sourceStart, endOffset: sourceStart + fixture.sourceSegments[0].length });
-  const dosageReview = validateSourceGrounding({ kind: 'dosage', claim: 'Medication dosage is reconciled', sourceText: 'One dosage source is audible; a second source is unavailable.', startOffset: 0, endOffset: 28, contradictory: true });
+  const [runtimeResult, setRuntimeResult] = useState<Record<string, unknown> | null>(null);
+  const [runtimeError, setRuntimeError] = useState<string | null>(null);
   const [language, setLanguage] = useState('English / Mixed');
   const [speakerSeparation, setSpeakerSeparation] = useState(true);
   const [noisyMode, setNoisyMode] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  useEffect(() => {
+    if (captureState !== 'processing') return;
+    if (role !== 'clinician') {
+      const timer = window.setTimeout(() => setCaptureState('ready'), 500);
+      return () => window.clearTimeout(timer);
+    }
+    const controller = new AbortController();
+    void fetch('/api/scribe', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        patientId: '20000000-0000-4000-8000-000000000007',
+        rawText: [fixture.clinicianLine, ...fixture.patientLines].join('\n'),
+      }),
+      signal: controller.signal,
+    }).then(async (response) => {
+      const result = await response.json().catch(() => ({})) as Record<string, unknown>;
+      if (!response.ok) throw new Error(String(result.error ?? 'Runtime scribe processing failed'));
+      setRuntimeResult(result);
+    }).catch((reason) => {
+      if (controller.signal.aborted) return;
+      const message = reason instanceof Error ? reason.message : 'Runtime scribe processing failed';
+      setRuntimeError(message);
+      onNotice(message);
+    }).finally(() => { if (!controller.signal.aborted) setCaptureState('ready'); });
+    return () => controller.abort();
+  }, [captureState, fixture, onNotice, role, setCaptureState]);
+  const runtimeGrounded = (runtimeResult?.groundedAssertions as Array<Record<string, unknown>> | undefined) ?? [];
+  const runtimeWithheld = (runtimeResult?.withheldAssertions as Array<Record<string, unknown>> | undefined) ?? [];
+  const runtimeReview = (runtimeResult?.needsReviewAssertions as Array<Record<string, unknown>> | undefined) ?? [];
   if (capture.state === 'processing') return <div className="capture-processing" aria-live="polite"><span className="capture-spinner"/><h3>Preparing a structured draft…</h3><p>Separating speakers, checking source grounding, and applying PHI redaction before the sample LLM boundary.</p><small>Demo processing · no audio was recorded or transmitted</small></div>;
-  if (capture.state === 'ready') return <div className="capture-results"><div className="capture-demo-label">Synthetic consult example · Demo draft</div><section className="transcript-preview"><header><div><span className="eyebrow">Speaker-labelled preview</span><h3>Sample transcript</h3></div><span>02:14 sample</span></header><p><b>{clinicianName}</b><span>“{fixture.clinicianLine}”</span></p><p><b>{fixture.patientShortName}</b><span>“{fixture.patientLines[0]}”</span></p><p className="uncertain-segment"><b>{fixture.patientShortName}</b><span>“{fixture.patientLines[1]}” <em>Review transcript quality before saving</em></span></p></section><section className="extracted-facts"><span className="eyebrow">Source-grounded assertions</span><h3>Key extracted facts</h3><ul>{fixture.facts.map((fact, index) => <li key={fact.label}><strong>{fact.label}</strong>{fact.value}<span>{index === 0 && groundedAssertion.releaseState !== 'grounded' ? 'Withheld' : 'Grounded'}</span></li>)}{patientName === 'Sarah Tan' && <li className="needs-review"><strong>Dosage conflict check</strong>No second dosage source available<span>{dosageReview.releaseState === 'needs_review' ? 'Needs review' : 'Withheld'}</span></li>}</ul><small>Ungrounded claims are abstained from rather than inserted as facts.</small></section><section className="draft-summary"><span className="eyebrow">Suggested clinical summary</span><h3>Review before saving</h3><p>{fixture.summary}</p></section><section className="structured-draft"><div><span className="eyebrow">Suggested structured entry</span><h3>Consult follow-up draft</h3></div><dl><div><dt>Finding</dt><dd>{fixture.facts[0].value}</dd></div><div><dt>Follow-up</dt><dd>{fixture.followUp}</dd></div><div><dt>Release</dt><dd>Internal draft until reviewed</dd></div></dl></section><details className="source-segments"><summary>Preview source segments</summary>{fixture.sourceSegments.map((segment, index) => <p key={segment}><mark>“{segment}”</mark> → {fixture.facts[index]?.label ?? 'Follow-up'} assertion</p>)}</details>{reviewing && <div className="review-gate" role="status"><strong>Review mode enabled</strong><span>Confirm every assertion against its highlighted source before saving.</span></div>}<div className="capture-actions"><button className="quiet-button" onClick={capture.reset}>Discard</button><button className="quiet-button" onClick={() => { setReviewing(true); onNotice('Draft opened for source review'); }}>Review before saving</button><button className="primary-button" onClick={() => onNotice(`${role === 'clinician' ? 'Clinical' : 'Staff'} demo draft saved for this session only`)}>Save as draft note</button></div></div>;
+  if (capture.state === 'ready') return <div className="capture-results"><div className="capture-demo-label">Synthetic consult example · {role === 'clinician' ? 'Runtime safety pipeline' : 'Staff preview only'}</div><section className="transcript-preview"><header><div><span className="eyebrow">Speaker-labelled preview</span><h3>Sample transcript</h3></div><span>02:14 sample</span></header><p><b>{clinicianName}</b><span>“{fixture.clinicianLine}”</span></p><p><b>{fixture.patientShortName}</b><span>“{fixture.patientLines[0]}”</span></p><p className="uncertain-segment"><b>{fixture.patientShortName}</b><span>“{fixture.patientLines[1]}” <em>Review transcript quality before saving</em></span></p></section><section className="extracted-facts"><span className="eyebrow">Runtime safety result</span><h3>Grounded, withheld, and review assertions</h3><ul>{runtimeGrounded.map((fact) => <li key={String(fact.id)}><strong>{String(fact.kind)}</strong>{String(fact.claim)}<span>Grounded</span></li>)}{runtimeWithheld.map((fact) => <li className="needs-review" key={String(fact.id)}><strong>{String(fact.kind)}</strong>{String(fact.review_reason ?? fact.claim)}<span>Withheld</span></li>)}{runtimeReview.map((fact) => <li className="needs-review" key={String(fact.id)}><strong>{String(fact.kind)}</strong>{String(fact.claim)}<span>Needs review</span></li>)}{role !== 'clinician' && <li><strong>Access</strong>Staff preview does not invoke privileged clinical generation.<span>Not persisted</span></li>}{runtimeError && <li className="needs-review"><strong>Runtime</strong>{runtimeError}<span>Withheld</span></li>}</ul><small>The deterministic provider output passed through contextual redaction, grounding, conflict, risk-floor, provenance, and internal-draft persistence. Synthetic UI runs are stored only against hidden QA-0001.</small></section><section className="draft-summary"><span className="eyebrow">Suggested clinical summary</span><h3>Review before release</h3><p>{String(runtimeResult?.summary ?? fixture.summary)}</p></section><section className="structured-draft"><div><span className="eyebrow">Persisted draft state</span><h3>Consult follow-up draft</h3></div><dl><div><dt>Grounded</dt><dd>{runtimeGrounded.length}</dd></div><div><dt>Withheld / review</dt><dd>{runtimeWithheld.length + runtimeReview.length}</dd></div><div><dt>Release</dt><dd>{role === 'clinician' ? 'Internal QA draft' : 'Not persisted'}</dd></div></dl></section>{reviewing && <div className="review-gate" role="status"><strong>Review mode enabled</strong><span>Confirm every assertion against its highlighted source before any release decision.</span></div>}<div className="capture-actions"><button className="quiet-button" onClick={() => { setRuntimeResult(null); setRuntimeError(null); capture.reset(); }}>Discard view</button><button className="quiet-button" onClick={() => { setReviewing(true); onNotice('Draft opened for source review'); }}>Review source</button><button className="primary-button" disabled>{role === 'clinician' ? 'Internal QA draft created' : 'Staff preview only'}</button></div></div>;
   return <div className="capture-ready"><div className={`record-orb state-${capture.state}`}><MicIcon/><span/></div><div className="capture-clock"><strong>{formatTime(capture.seconds)}</strong><span>{capture.state === 'idle' ? 'Ready for synthetic demo' : capture.state === 'paused' ? 'Paused' : 'Recording preview'}</span></div><p>This interface demonstrates how an ambient consultation could become a source-grounded draft. It does not access your microphone or send audio.</p>{capture.state === 'idle' && <button className="primary-button capture-start" onClick={() => capture.setState('recording')}><MicIcon/> Start voice capture demo</button>}{capture.state === 'recording' && <div className="record-controls"><button className="quiet-button" onClick={() => capture.setState('paused')}>Pause</button><button className="primary-button" onClick={() => capture.setState('processing')}>Stop &amp; prepare draft</button></div>}{capture.state === 'paused' && <div className="record-controls"><button className="quiet-button" onClick={() => capture.setState('recording')}>Resume</button><button className="primary-button" onClick={() => capture.setState('processing')}>Stop &amp; prepare draft</button></div>}<div className="speaker-preview" aria-label="Speaker activity preview"><span><i/> {clinicianName}</span><span><i/> {patientName}</span><small>Speaker separation enabled</small></div><details className="capture-options"><summary>Capture settings</summary><label><span>Speech language</span><select value={language} onChange={(event) => setLanguage(event.target.value)}><option>English / Mixed</option><option>English</option><option>Mandarin / English</option><option>Malay / English</option></select></label><label><input type="checkbox" checked={speakerSeparation} onChange={(event) => setSpeakerSeparation(event.target.checked)}/> Speaker separation enabled</label><label><input type="checkbox" checked={noisyMode} onChange={(event) => setNoisyMode(event.target.checked)}/> Noisy environment mode</label></details><div className="capture-safety-notes"><span>PHI is redacted before sample LLM processing.</span><span>Outputs remain drafts until a care-team member reviews them.</span></div></div>;
 }
 

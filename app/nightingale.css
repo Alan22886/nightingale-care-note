@@ -63,6 +63,7 @@
 .identity-role-list button>span:first-child{min-width:0;display:grid;gap:1px}.identity-role-list strong{overflow:hidden;color:#263b54;font-size:13px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}.identity-role-list small{color:#788598;font-size:12px;font-weight:400}
 .identity-check{width:20px;height:20px;display:grid;place-items:center;flex:none;border-radius:50%;background:#dfe9f7;color:var(--brand);font-size:12px;font-weight:700}
 .identity-menu-panel>.identity-access-action{width:100%;margin:8px 0 0;padding:10px 9px;border:0;border-top:1px solid #e7ebf0;border-radius:0;background:none;color:#52657c;font-size:12.5px;font-weight:550;text-align:left;cursor:pointer}.identity-menu-panel>.identity-access-action:hover,.identity-menu-panel>.identity-access-action:focus-visible{color:var(--brand)}
+.safety-floor-label{padding:2px 6px;border:1px solid #b9d2cd;border-radius:5px;background:#f0f7f5;color:#3e6d65;font-size:11.5px;font-weight:650}
 .drawer,.modal{border:1px solid #dce3eb;background:#fafbfd;box-shadow:-18px 0 52px #17345b24}.modal{box-shadow:0 18px 55px #17345b2b}.drawer-backdrop,.modal-backdrop{animation-duration:.14s}
 @keyframes overlay-in{from{opacity:0;transform:translateY(-3px)}}
 @media(max-width:600px){.identity-menu>summary{width:202px;min-width:0}.patient-app .identity-menu>summary{width:190px}.identity-menu>summary .identity-summary-copy strong{max-width:164px}.identity-menu-panel{width:min(292px,calc(100vw - 24px))}}

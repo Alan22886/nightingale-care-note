@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import type { Role } from '../../../lib/domain/models';
-import { ApiError, getAuthContext, publicIdentity, signInAsDemoRole } from '../../../lib/server/auth';
+import { ApiError, getAuthContext, publicIdentity, signInAsDemoRole, type DemoSessionRole } from '../../../lib/server/auth';
 
-const ROLES = new Set<Role>(['patient', 'staff', 'clinician', 'admin']);
+const ROLES = new Set<DemoSessionRole>(['patient', 'staff', 'clinician', 'admin', 'qa_patient']);
 
 export async function GET() {
   try {
@@ -16,7 +15,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json().catch(() => null)) as { role?: Role } | null;
+    const body = (await request.json().catch(() => null)) as { role?: DemoSessionRole } | null;
     if (!body?.role || !ROLES.has(body.role)) return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
     const profile = await signInAsDemoRole(body.role);
     return NextResponse.json({ identity: publicIdentity(profile) });
@@ -25,4 +24,3 @@ export async function POST(request: Request) {
     throw error;
   }
 }
-

@@ -2,7 +2,7 @@
 
 The first working prototype was a React/TypeScript Cloudflare Worker site with D1 and a private Sites deployment. It remains preserved at the pre-migration checkpoint below. The active migration replaces its runtime authority with native Next.js, Supabase Auth, Supabase PostgreSQL, and PostgreSQL RLS for deployment on Vercel.
 
-Current validation: the linked Supabase project has all migrations and synthetic Auth/data seed applied. Lint, TypeScript, the native Next.js production build, and all 13 live Supabase-backed micro-tests pass against <https://nightingale-care-note.vercel.app>. The obsolete D1/Sites runtime has been removed from the active tree after production verification and remains recoverable from Git history.
+Current hardening adds forward-only release-state/RLS enforcement, a deterministic `/api/scribe` runtime, critical-token grounding, contextual redaction, typed conflicts, safety-floor acknowledgement, and server-side provenance verification. Final production migration, test, benchmark, and deployment evidence is reported from the completed release rather than assumed from an earlier checkpoint.
 
 ## Pre-Supabase working checkpoint
 
@@ -22,7 +22,7 @@ The submission architecture is now fixed as Next.js + TypeScript on Vercel, back
 - **Sites identity:** `lib/server/demo-auth.ts`, `app/chatgpt-auth.ts`, the `nightingale_demo_identity` cookie, and the role-switch/session endpoint.
 - **Sites hosting/runtime:** `.openai/hosting.json`, `vite.config.ts`, Vinext, Wrangler, Cloudflare plugins/types, Sites plugin, and Vinext package scripts.
 - **Client-local mutations:** `app/workspace.tsx` currently owns comments, task status, revisions, feedback, and seeded timeline state in React state; these must move behind authenticated Supabase-backed APIs.
-- **Tests/benchmark/docs:** Python tests target the local demo APIs and cookie; benchmark sends the demo cookie; README, Technical Brief, Demo Script, and Attribution describe the prototype stack.
+- **Historical tests/benchmark/docs:** the pre-migration benchmark used an obsolete demo cookie; the active benchmark now authenticates through `/api/session` and reuses the Supabase session cookie.
 
 ### Staged migration plan
 
@@ -47,7 +47,7 @@ The submission architecture is now fixed as Next.js + TypeScript on Vercel, back
 
 - Stage A — complete and pushed: Supabase clients/config, relational migrations, RLS policies, transactional functions, repeatable Auth/data seed.
 - Stages B–D — complete and pushed: Supabase repositories, Auth sessions, protected API routes, and existing UI interactions wired to persistent APIs.
-- Stage E — complete: 13/13 live database, RLS, authorization, persistence, revision, concurrency, provenance, learning, ranking, and redaction tests pass.
+- Stage E — expanded: focused unit and live QA-only tests now cover runtime grounding, release RLS, contextual redaction, conflict detection, provenance fail-closed behavior, internal scribe persistence, and safety floors in addition to the original suite.
 - Stage F — complete: Supabase environment configuration and the canonical Vercel production deployment are verified.
 - Stage G — complete: obsolete D1/Sites runtime files and dependencies were removed only after the production RLS/persistence suite passed.
 - Stage H — complete: architecture, setup, demo, attribution, public URL, and validation evidence reflect the final deployment.
