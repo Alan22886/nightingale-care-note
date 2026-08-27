@@ -59,3 +59,13 @@ The submission architecture is now fixed as Next.js + TypeScript on Vercel, back
 - Public smoke check: HTTP 200, HTML response.
 - Live suite: 13/13 tests passed against the deployed application and linked Supabase project.
 - Security evidence: real Supabase Auth sessions, cross-clinic RLS denial, patient visibility restrictions, author-role protections, persistent mutations, deterministic 409 version conflicts, bounded clinic learning, and pre-provider PHI redaction.
+
+### Final submission audit — 28 Aug 2026
+
+- Implementation remained frozen at `c742bdcd9cbd51148d1010abbdee5ce8e4f1c832`; this pass changed documentation and submission artifacts only.
+- Canonical production: <https://nightingale-care-note.vercel.app> (HTTP/UI and role flows verified).
+- Clean install/audit: 369 packages installed, 370 audited, 0 vulnerabilities.
+- Quality gates: lint PASS, typecheck PASS, focused safety 23/23, live Supabase/RLS/persistence 17/17, production webpack build PASS.
+- Final benchmark: real session/cookie, 15 warmups, 100/100 successful measured requests; P50 207.60 ms, P95 268.50 ms, P99 322.75 ms. P95 remains below the 300 ms target.
+- Live mutations remained isolated to hidden `QA-0001`; cleanup removed 4 transient derived highlights, retained 28 immutable drafts plus audit history, and touched no visible demo patient.
+- Final requirement matrix, print-ready three-page Technical Brief PDF, product-led demo materials, attribution, checklist, and email draft are recorded in `docs/FINAL_AUDIT.md` and the linked submission files.

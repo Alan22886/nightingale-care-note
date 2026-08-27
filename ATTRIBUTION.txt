@@ -1,26 +1,33 @@
-Nightingale Care Note — Attribution
+Nightingale Care Note - Attribution
 
-Application data and clinical copy: original synthetic content created for this prototype. No real patient data or third-party clinical dataset is used.
+All application data and clinical copy are original synthetic content created for this prototype. No real patient data or third-party clinical dataset is used.
 
-Runtime and UI dependencies (license verified from installed package metadata):
-- React 19.2.6 — MIT
-- React DOM 19.2.6 — MIT
-- Next.js 16.3.3 — MIT
-- @supabase/supabase-js 2.112.4 — MIT
-- @supabase/ssr 0.12.5 — MIT
+Runtime libraries (purpose; license verified from installed package metadata):
+- Next.js 16.3.3 - application framework and server runtime; MIT
+- React 19.2.6 - component UI runtime; MIT
+- React DOM 19.2.6 - browser rendering; MIT
+- @supabase/supabase-js 2.112.4 - Supabase Auth/PostgreSQL client; MIT
+- @supabase/ssr 0.12.5 - server-side Supabase session handling; MIT
 
-Development dependencies (license verified from installed package metadata):
-- TypeScript 5.9.3 — Apache-2.0
-- ESLint 9.39.4 — MIT
-- Tailwind CSS 4.2.1 — MIT
+Development libraries (purpose; license verified from installed package metadata):
+- TypeScript 5.9.3 - static typing and compilation; Apache-2.0
+- ESLint 9.39.4 - source linting; MIT
+- eslint-config-next 16.3.3 - Next.js lint rules; MIT
+- Tailwind CSS 4.2.1 - CSS build integration; MIT
+- @tailwindcss/postcss 4.2.1 - PostCSS processing; MIT
 
 Testing:
-- pytest 9.1.1 — MIT (verify distribution license metadata before external redistribution)
+- pytest 9.1.1 - Python integration/micro-test runner; MIT (recheck if redistributing the package itself)
+- Node.js built-in test runner - focused domain safety tests; Node.js project license terms
 
-AI / APIs:
-- DeterministicScribeProvider — original mock implementation; no external model call.
-- Optional OpenAI provider interface — not enabled and no model/API content is bundled.
-- OpenAI Codex was used as an AI-assisted development tool.
+Hosted services and APIs:
+- Vercel - Next.js hosting and functions; external service, no code bundled
+- Supabase - Auth and managed PostgreSQL/RLS; external service, no code bundled
+- DeterministicScribeProvider / deterministic-clinical-v2 - original deterministic provider; no external model call
+- OpenAI Codex - AI-assisted development tool; no model weights or API output bundled
 
 Assets:
-- No stock imagery, generated imagery, or external icon pack is bundled. The lettermark and interface visuals are original CSS/typography.
+- public/brand/nightingale-mark.png - original prototype brand mark
+- public/patient-portraits.png - original synthetic portrait sprite sheet; depicts no real patients
+- public/og.png, app/icon.png, and app/apple-icon.png - original submission/application artwork
+- Interface icons are original inline SVG/CSS. No external icon pack or stock imagery is bundled.

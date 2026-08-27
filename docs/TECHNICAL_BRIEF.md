@@ -1,52 +1,94 @@
-# Nightingale Care Note — Technical Brief
+# Nightingale Care Note - Technical Brief
 
-## 1. Problem framing
+## 1. Problem and product thesis
 
-The core problem is not lack of patient information. It is the time and cognitive cost required to determine what matters now. EHRs preserve snapshots and notes, but a clinician still has to reconstruct the longitudinal story under consultation pressure.
+The core problem is not lack of patient information. It is the time and cognitive cost required to determine what matters now. A clinician entering a consultation must reconstruct a story from dated notes, tasks, patient input, and structured snapshots.
 
-AI can reduce reading, but reduction creates a verification problem: what if the model surfaces the wrong thing? Nightingale therefore treats reduction as reversible, prioritization as explainable, provenance as mandatory, and clinician judgment as authoritative.
+AI can reduce that reading, but reduction creates a verification problem: what if the system surfaces the wrong thing? Nightingale's thesis is that clinical AI should reduce time-to-understanding without reducing the clinician's ability to verify, question, or override what it surfaces.
 
-## 2. Product response
+The product response is deliberately small: **Glance directs attention; provenance enables verification; clinician confirmation establishes authority; bounded feedback adapts workflow.** Reduction remains reversible, ranking remains explainable, and historical disagreement remains visible.
 
-**Glance → attention. Provenance → verification. Clinician confirmation → authority. Feedback → adaptation.**
+## 2. Ten-second Glance: risk is not importance
 
-Sarah Tan’s record compresses eighteen months into exactly three current priorities: worsening HbA1c, dizziness after a medication change, and an unresolved renal laboratory follow-up. Each item names its source and time, explains its deterministic rank, and can jump to an immutable source span. The earlier AI claim that Sarah stopped metformin remains visible as conflicted/superseded; the later clinician clarification takes authority without silently rewriting history.
+Sarah Tan's clinician workspace reduces eighteen months of synthetic history to exactly three priorities: dizziness after a medication change, worsening HbA1c, and a pending renal-function follow-up. Each item shows source/time, workflow actions, and an expandable explanation derived from actual score components.
 
-## 3. Architecture
+Nightingale separates two concepts:
+
+- **Risk** is safety severity if an assertion is true. A deterministic floor makes a Critical or risk ≥ 0.9 item remain surfaced and non-dismissible.
+- **Importance** is what deserves workflow attention now. A transparent score combines risk, unresolved action, recency, clinical change, conflict, and confirmation, then applies a bounded clinic/category multiplier.
+
+```text
+base = 4·risk + 3·unresolved + 2·recency
+     + 3·clinical_change + 2.5·conflict + 1·confirmation
+
+workflow_importance = base × clinic_multiplier
+final = max(deterministic_safety_floor, workflow_importance)
+```
+
+Feedback signals are Pin +3, Accept +2, Source Open +1, Dismiss -2, and Acknowledge 0. For `prior_signal_count`, the persistent database update is:
+
+```text
+raw_delta = signal × 0.100 / max(4, prior_signal_count + 1)
+applied_delta = 0 if raw_delta = 0
+                otherwise sign(raw_delta) × max(abs(raw_delta), 0.001)
+multiplier = clamp(previous + applied_delta, 0.80, 1.35)
+```
+
+The denominator reduces leverage as exposure grows; the 0.001 precision floor keeps a non-zero update observable in storage. Raw and applied deltas are audited. **Learning adapts workflow ordering, never clinical truth or deterministic safety risk.**
+
+## 3. Provenance, grounding, and abstention
+
+Every highlight cites a care entry, immutable version, start/end offsets, stored excerpt, and SHA-256 source hash. Before returning a normal claim, the server verifies that the source/version exists, the bounds are valid, the exact slice equals the excerpt, and the hash matches. “View evidence” scrolls to the source entry and temporarily marks the exact phrase. No valid provenance means no normal surfaced AI claim.
+
+The runtime distinguishes extraction from display:
+
+```text
+raw source → structured assertion → critical-token grounding → display wording
+```
+
+Grounding checks medication identity, numbers, dose, units, frequency, laboratory values, negation/polarity, allergen, reaction, and medication status. Exact-span failure or critical-token mismatch causes abstention; insufficient ordinary semantic overlap produces “Insufficient evidence to surface confidently.” A supported contradiction becomes Needs Review rather than a normal fact.
+
+The interface does not show self-reported model confidence percentages. They would imply calibration that this prototype has not established. It shows verifiable workflow states instead: AI Suggested, Clinician Confirmed, Clinician Rejected, Conflict Detected, Needs Review, and Superseded.
+
+## 4. Conflict and patient safety
+
+Conflict detection is intentionally narrow and testable: allergy polarity, medication active/discontinued status, and medication dosage/frequency. It supports AI-human and human-human comparisons. Both assertions, both sources, and history are preserved; the draft enters review-required/Conflict state and needs explicit clinical resolution. This is not generalized medical contradiction detection.
+
+Patient release is a separate safety boundary. `release_state` is `internal`, `review_required`, `approved`, or `released`. Patient access requires the owned patient, patient visibility, `released`, a non-AI entry type, and a trust state other than AI Suggested, Conflict Detected, or Needs Review. The application repeats the predicate, while PostgreSQL RLS remains authoritative. Tests deny another patient, internal records, raw AI notes, internal comments, and internal historical revisions while allowing released patient-safe content.
+
+## 5. Runtime AI and redaction
+
+`POST /api/scribe` performs authentication, clinic/role authorization, contextual PHI redaction, deterministic provider execution, schema validation, critical-token grounding, typed conflict detection, risk-floor application, abstention, internal persistence, provenance creation, and metadata-only audit.
+
+The default and only implemented provider is `deterministic-clinical-v2`; no external LLM is called. The choice makes the safety path reproducible, testable, and demo-safe within the challenge. A live provider would remain behind the same pre-provider and post-provider controls.
+
+Redaction occurs before provider processing. Evaluation covers known patient, clinician/staff, and family names; titled and CJK names; Singapore-style ID; phone; email; DOB; address/multiline address; structured JSON/key-value input; and combined PHI classes. Tests also ensure medication, dose, frequency, HbA1c/laboratory values, and non-identifying clinical dates remain intact. A false negative is a privacy failure; a false positive can remove clinically meaningful context and is therefore a clinical-accuracy failure.
+
+## 6. Architecture and data model
 
 ```mermaid
 flowchart LR
-  UI[Browser: clinician / staff / patient workspace] --> NEXT[Next.js on Vercel]
-  NEXT --> API[Server routes]
-  API --> AUTH[Supabase Auth context]
-  API --> DOMAIN[Domain services]
-  DOMAIN --> SCORE[Deterministic importance + bounded learning]
-  DOMAIN --> PROV[Provenance integrity]
-  DOMAIN --> REV[Versions + optimistic concurrency]
-  API --> DB[(Supabase PostgreSQL + RLS)]
-  SOURCE[Synthetic consultation text] --> REDACT[Contextual PHI redaction]
-  REDACT --> PROVIDER[Deterministic scribe provider]
-  PROVIDER --> VALIDATE[Schema + critical-token grounding]
-  VALIDATE --> CONFLICT[Typed conflict + deterministic risk floor]
-  CONFLICT --> ABSTAIN[Abstain or internal/review draft]
-  ABSTAIN --> DB
-  DB --> PRECOMP[Stored highlights]
-  PRECOMP --> UI
+  UI[Browser: clinician / staff / patient / admin] --> NEXT[Next.js 16 on Vercel]
+  NEXT --> AUTH[Supabase Auth session]
+  NEXT --> DOMAIN[Authorization · scoring · provenance · revisions · redaction]
+  DOMAIN --> DB[(Supabase PostgreSQL + RLS)]
+  SOURCE[Synthetic source text] --> REDACT[Contextual PHI redaction]
+  REDACT --> PROVIDER[deterministic-clinical-v2]
+  PROVIDER --> GATE[Schema · grounding · conflict · risk · abstention]
+  GATE --> DB
+  DB --> VERIFY[Stored highlights + provenance verification]
+  VERIFY --> UI
 ```
-
-The warm Glance path reads stored structured highlights; opening a patient never invokes a provider. `POST /api/scribe` is the single real runtime path. The implemented `deterministic-clinical-v2` provider works without credentials; there is no live LLM or speech-to-text adapter in this build. Its output must pass schema validation, exact source-span and critical-token grounding, typed conflict detection, deterministic risk assignment, abstention, internal-only persistence, provenance, and audit.
-
-## 4. Data model
 
 ```mermaid
 erDiagram
   CLINICS ||--o{ PROFILES : has
   CLINICS ||--o{ PATIENTS : scopes
-  PATIENTS ||--o{ CARE_ENTRIES : released_or_internal_timeline
-  CARE_ENTRIES ||--|{ ENTRY_VERSIONS : snapshots
-  CARE_ENTRIES ||--o{ COMMENTS : threads
-  PATIENTS ||--o{ TASKS : follow_up
-  PATIENTS ||--o{ HIGHLIGHTS : glance
+  PATIENTS ||--o{ CARE_ENTRIES : timeline
+  CARE_ENTRIES ||--|{ ENTRY_VERSIONS : immutable_snapshots
+  CARE_ENTRIES ||--o{ COMMENTS : discusses
+  PATIENTS ||--o{ TASKS : follows_up
+  PATIENTS ||--o{ HIGHLIGHTS : surfaces
   HIGHLIGHTS ||--|{ PROVENANCE_SPANS : cites
   ENTRY_VERSIONS ||--o{ PROVENANCE_SPANS : resolves
   CARE_ENTRIES ||--o| AI_SCRIBED_NOTES : metadata
@@ -55,48 +97,20 @@ erDiagram
   CARE_ENTRIES ||--o{ AUDIT_LOGS : records
 ```
 
-`care_entries` is the shared timeline abstraction. Its `release_state` is `internal`, `review_required`, `approved`, or `released`, defaulting safely to `internal`. Content lives in immutable `entry_versions`; highlights cite a specific version and span. Revert creates a new version referencing its source. Audit logs contain actor, action, entity, timestamp, version transition, and safety-decision metadata, never note bodies.
+Supabase Auth establishes real synthetic demo identities. PostgreSQL RLS enforces role, clinic, patient, release, and author boundaries; browser-selected role text is not authority. Full entry snapshots increase monotonically. Expected-version writes give deterministic `409 Conflict`; revert and clinical Undo create a new compensating version rather than deleting history. Audit logs contain actor/action/entity/version and safety metadata, never note bodies.
 
-## 5. Security and redaction
+## 7. Collaboration, patient experience, and voice
 
-All displayed records are synthetic. Supabase Auth establishes identity; PostgreSQL RLS enforces patient, staff, clinician, admin, clinic, visibility, release, and author-ownership rules at the data layer. Patient care-entry SELECT requires the owned patient, `visibility = patient`, `release_state = released`, a non-AI entry type, and no AI Suggested, Conflict Detected, or Needs Review trust state. The application repeats this predicate as defense in depth. Patients remain denied internal comments, raw AI notes, audit data, and provenance that could reveal forbidden sources. Staff and clinicians cannot overwrite one another’s authored sections.
+Clinician/staff collaboration includes persistent entry-level comments, mention-prefilled replies, resolve/unresolve, task status, immutable treatment-plan versions, diffs, revert, and short-lived compensating Undo. The database/API supports task owner changes, but the present UI exposes status rather than reassignment. Replies are follow-up comments rather than nested parent/child threads.
 
-The provider flow is raw text → contextual known-name plus name/ID/phone/email/address/DOB redaction → deterministic provider → schema validation → critical-token grounding → conflict detection → deterministic risk floor → abstention → internal draft/provenance/audit. Ordinary capitalization is retained to limit false positives. The developer redaction drawer visibly compares the provider boundary before and after.
+Patient View is a distinct plain-language surface for identity, what to know, what to do next, current/recent care, and care-team context. It excludes internal morphology, provenance, comments, revisions, and ranking mechanics. The family profile is a synthetic, session-only consent prototype - not delegated hospital-account federation.
 
-Provenance also fails closed on reads. Before a stored highlight is returned normally, the server requires an existing immutable version, valid bounds, an exact excerpt match, and a matching SHA-256 hash. Invalid claims are removed from the normal result and a deduplicated failure audit is attempted.
+Voice Capture demonstrates ready, recording, paused, processing, and review states with current-patient fixtures. Clinician completion can send synthetic transcript text through the real `/api/scribe` path and persist only a hidden `QA-0001` internal draft. There is no microphone access, audio upload, STT, diarization, live LLM transcription, or production ambient listening.
 
-The role selector signs into a server-known synthetic Supabase Auth account using a server-only demo password. The browser never receives the Supabase secret key or password, and a client-supplied role is not trusted as authority.
+## 8. Performance, validation, and trade-offs
 
-## 6. Importance engine
+The production benchmark signs in through `/api/session`, reuses the returned cookie, performs 15 warmups, then measures 100 authenticated `/api/highlights` calls; every non-200 fails the run. On 28 Aug 2026 it measured **P50 207.60 ms, P95 268.50 ms, P99 322.75 ms, 0 failures**. P95 meets the required ≤ 300 ms target.
 
-Each candidate has score components for risk, unresolved action, recency, clinical change, conflict, and confirmation. Central weights produce a base score; a clinic/category multiplier produces the final score. The UI shows component-derived reasons, not an uncalibrated confidence percentage.
+Final validation: npm audit 0 vulnerabilities; lint and typecheck pass; 23/23 focused safety tests pass; 17/17 live Supabase/RLS/persistence tests pass; and the production webpack build succeeds. The default Turbopack build cannot bind its helper port inside this audit sandbox, a tooling restriction rather than an application compile failure.
 
-Feedback signals are Pin +3, Accept +2, Source Open +1, Dismiss −2, and Acknowledge 0. The exposure-aware update is:
-
-```text
-raw_delta = signal × 0.100 / max(4, prior_signal_count + 1)
-applied_delta = 0 when raw_delta = 0, otherwise sign(raw_delta) × max(abs(raw_delta), 0.001)
-multiplier = clamp(previous_multiplier + applied_delta, 0.80, 1.35)
-```
-
-Raw and applied deltas are audited. Critical or risk ≥ 0.9 safety-floor items cannot be dismissed; acknowledgement records review without changing ordering. Learning adapts workflow ordering, never clinical truth or deterministic safety risk.
-
-## 7. Performance
-
-`scripts/benchmark-glance.mjs` authenticates through the current Supabase session exchange, reuses the returned cookie, warms the QA-only `/api/highlights` path 15 times, then measures at least 100 successful requests. Every non-200 fails the run. On 27 Aug 2026, the local Next.js server against linked Supabase measured **P50 201.21 ms, P95 231.96 ms, P99 348.09 ms**, with 100/100 HTTP 200 responses. This includes the RLS-governed relational provenance read and server integrity verification; it excludes browser rendering.
-
-The Supabase project is hosted in Mumbai (`ap-south-1`), so Vercel Functions are explicitly placed in Mumbai (`bom1`) rather than the platform's Washington default. This removes an avoidable intercontinental database round trip. On the clean canonical production QA fixture, the same 15-warm-up/100-request run measured **P50 183.50 ms, P95 233.26 ms, P99 286.16 ms**, with 100/100 HTTP 200 responses and P95 below the 300 ms target.
-
-## 8. Trade-offs and limitations
-
-### What we deliberately did not build
-
-- **CRDT collaboration:** section-level expected-version checks give deterministic 409 behavior and preserve independent edits.
-- **Live voice capture:** the synthetic UI calls the real text safety pipeline for clinicians, but no microphone, transcription, or live LLM is implemented.
-- **AI-only importance ranking:** rejected because ranking must remain explainable and testable.
-- **Real patient/EHR integration:** excluded by the synthetic-data scope.
-- **Arbitrary span comments:** entry-level threaded comments are complete; span precision is reserved for provenance.
-
-PostgreSQL functions atomically create immutable versions, update current-version pointers, enforce expected-version checks, and write metadata-only audits. Feedback and learned weights persist per clinic. Older records use full, summary, or compressed display tiers; original source is retained, and active medications, diagnoses, allergies, and unresolved tasks never decay only because of age.
-
-The public application is deployed at <https://nightingale-care-note.vercel.app>. Production validation uses the hidden `QA-0001` fixture for all mutations. The earlier D1/Sites implementation is preserved in Git history, while its obsolete runtime files and dependencies have been removed from the active tree.
+Deliberate exclusions are a live LLM, real audio/STT, generalized clinical NLP, CRDT editing, arbitrary span comments, EHR/FHIR integration, and real patient data. The seeded demo contains AI doctor and AI patient-session notes but no AI nurse-consult summary. These trade-offs keep the evaluated trust path narrow enough to prove rather than broad enough to imply unsupported safety.

@@ -1,49 +1,85 @@
-# Nightingale Care Note — 4–6 Minute Demo
+# Nightingale Care Note - 4–6 Minute Demo
 
 Production: <https://nightingale-care-note.vercel.app>
 
-## Opening · 20–30 seconds
+## 0:00–0:25 · The problem
 
-“Clinicians should not have to reread six months of fragmented history before every consultation. Nightingale Care Note turns that history into the three things that matter most now—in under ten seconds—while keeping every AI-surfaced insight verifiable at its source.”
+Open on Sarah Tan as **Dr Marcus Lim · Clinician**.
 
-## Scenario A — Glance and provenance · ~90 seconds
+“Clinicians should not have to reread six months of fragmented history before every consultation. Nightingale turns that history into the three things that matter most now - in under ten seconds - while keeping every AI-surfaced insight verifiable at its source.
 
-1. Open the production URL; Sarah Tan loads as **Dr Marcus Lim · Clinician**.
-2. Pause on the exactly three priorities: HbA1c 7.1 → 8.3, dizziness after medication change, renal labs pending.
-3. Open **Why this?** on dizziness. Point out that each reason comes from the deterministic scoring components and that the clinic multiplier is bounded.
-4. Click **View evidence**. The timeline scrolls to the AI Patient Session and highlights the exact phrase “dizziness since the medication adjustment last week.”
-5. Point out **AI Suggested** and **Conflict Detected**. The earlier “stopped metformin” statement remains visible, while the Aug 24 clinician clarification is authoritative.
-6. Accept or pin an ordinary highlight. For a protected finding, show **Safety floor** and **Acknowledge**; it cannot be misleadingly dismissed.
+Clinical AI should reduce the time required to understand a patient without reducing the clinician’s ability to verify, question, or override what the AI surfaces.”
 
-## Scenario A2 — Runtime scribe safety · ~45 seconds
+## 0:25–1:20 · Ten-second Glance
 
-1. Select **Record consult** as the clinician and run the synthetic capture.
-2. Explain that no microphone or speech-to-text is active: the fixture text is sent to the real `/api/scribe` endpoint.
-3. Show grounded, withheld, and needs-review sections. The generated record remains an internal draft against hidden `QA-0001`, never a released visible-patient fact.
+Pause on the three priorities: dizziness after medication change, HbA1c 7.1% → 8.3%, and renal-function follow-up pending.
 
-## Scenario B — Collaboration and audit · ~2 minutes
+Open **Why this?** on dizziness.
 
-1. Switch to **Nurse Alice Wong · Staff**; note that this signs into a real server-recognized Supabase Auth demo account.
-2. Open **Comments & tasks**. Add `@clinician Please review dizziness before the next appointment`, resolve/unresolve a thread, and change the renal follow-up to **In Progress**.
-3. Switch to **Dr Marcus Lim · Clinician**. Pin or accept a relevant highlight.
-4. Select **Edit treatment plan**, change one sentence, and save. Explain expected-version conflict protection.
-5. The revision drawer shows a new immutable version and a meaningful before/after diff.
-6. Refresh once to show the edit persists, then restore Version 1. Emphasize that restore creates another PostgreSQL-backed version; it never deletes intervening history.
+“The ranking is not an LLM opinion. Deterministic components cover risk, unresolved action, recency, clinical change, conflict, and confirmation. The clinic can learn bounded workflow preferences, but a safety floor remains authoritative.”
 
-## Scenario C — Longitudinal context and learning · ~90 seconds
+Point to Accept, Dismiss, Pin, and the protected Acknowledge behavior if showing `QA-0001` in a separate prepared tab. Do not mutate Sarah for the recording.
 
-1. Scan August 2026, February 2026, and April 2025 entries. Show manual notes, AI-scribed notes, and compressed old context.
-2. Use the small HbA1c line: 7.1 → 7.3 → 8.3.
-3. Filter **AI** and explain the preserved metformin conflict.
-4. Open “Why this?” after pinning a medication-change item. The category multiplier increases conservatively and can add “frequently confirmed by this clinic.”
-5. Explain that old source remains retrievable; only default presentation is compressed.
+“Learning adapts workflow ordering, never clinical truth or deterministic safety risk.”
 
-## Architecture and security close · ~45 seconds
+## 1:20–2:00 · Evidence Thread
 
-1. Open **Security → Pre-LLM redaction**. Show name, Singapore-style ID, phone, email, address, and DOB replaced before provider invocation.
-2. Switch to **Sarah Tan · Patient**. The Glance/internal timeline and Security surface disappear; only patient-visible summary and instructions remain.
-3. Mention that PostgreSQL RLS—not UI hiding—produces the automated denial proofs for raw AI notes, internal comments, cross-role overwrites, and cross-clinic access.
+Click **View evidence** on dizziness. Let the page scroll to the AI Patient Session and pause on the exact highlighted phrase.
 
-## Final sentence
+“This is the Evidence Thread: the claim resolves to an immutable entry version, exact source span, stored excerpt, and integrity hash. The server verifies that chain before returning the claim.
+
+Every AI-derived claim must either map to valid evidence or abstain.”
+
+## 2:00–2:35 · Trust and conflict
+
+Point to **Conflict Detected**, the earlier “stopped metformin” wording, and the clinician correction that Sarah continued metformin 500 mg twice daily.
+
+“Both versions remain visible. Clinician-confirmed information becomes authoritative without silently rewriting the earlier AI memory. Supported conflicts become Needs Review; unsupported assertions are withheld as insufficient evidence.
+
+We intentionally do not show self-reported model confidence. Instead, we expose verifiable trust states.”
+
+## 2:35–3:05 · Collaboration and immutable history
+
+Open **Comments & follow-up**. Show the `@clinician` comment, resolve/reopen controls, task owner, and task status. Prefer read-only demonstration; if changing status, immediately use Undo.
+
+Open **Edit treatment plan** and then Revision history without saving a new edit. Show the existing diff and explain:
+
+“Expected-version checks prevent silent last-write-wins. Revert and clinical Undo create a new compensating version; intervening history is never deleted.”
+
+## 3:05–3:40 · Patient View
+
+Use **Viewing as → Sarah Tan · Patient**.
+
+“This is a separate product experience: identity, what to know, what to do next, current care, recent care, and the care team. Internal comments, raw AI notes, provenance mechanics, revisions, and ranking states are absent.
+
+Patient-facing information crosses a separate release boundary enforced both in application logic and PostgreSQL RLS.”
+
+At desktop width, point briefly to **Add family member** and its consent/limitations copy. Do not connect it during the recording.
+
+## 3:40–4:20 · Honest Voice Capture prototype
+
+Return to Clinician, open **Record consult**, and show Sarah in the speaker preview. Optionally navigate Sarah → Patients → Daniel → Record consult to show current-patient binding, then return to Sarah.
+
+“This is a workflow prototype, not live audio. It does not access a microphone, upload audio, perform speech recognition, diarization, or live LLM transcription. A patient-specific synthetic transcript can feed the real `/api/scribe` safety path; clinician runs persist only an internal draft against hidden QA-0001.”
+
+If demonstrating processing, stop only after confirming the active patient and mention that the mutation is isolated to hidden QA data.
+
+## 4:20–4:50 · Evaluation and abstention
+
+Use the prepared Voice result or Technical Brief diagram.
+
+“The runtime authenticates and authorizes, redacts PHI before provider processing, validates the schema, grounds critical tokens, detects narrow allergy/medication/dosage conflicts, applies a deterministic risk floor, and either creates an internal review draft or abstains.
+
+The provider is deterministic-clinical-v2 - chosen so this safety pathway is reproducible, testable, and demo-safe.”
+
+## 4:50–5:10 · Architecture and measured performance
+
+Briefly show **Demo → Identity & access**, then the Technical Brief architecture diagram.
+
+“Next.js runs on Vercel with Supabase Auth, PostgreSQL, and Row-Level Security. The final production benchmark used a real session, 15 warmups, and 100 measured requests: P95 was 268.50 milliseconds with zero failures, below the 300-millisecond target.”
+
+## 5:10–5:25 · Close
+
+Return to Sarah’s three priorities.
 
 “Nightingale helps clinicians read less without asking them to trust blindly: reduction stays reversible, ranking stays explainable, and every important claim stays traceable.”
