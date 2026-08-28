@@ -3,9 +3,8 @@
 **A shared longitudinal care note that helps clinicians understand what matters now in under 10 seconds - without hiding where AI-derived information came from.**
 
 - **Live demo:** <https://nightingale-care-note.vercel.app>
-- **Demo video:** _Add the final public or unlisted video URL before submission_
+- **Demo video:** <https://youtu.be/pesI9CGg5-k>
 - **Technical brief:** [Markdown](docs/TECHNICAL_BRIEF.md) · [Print-ready PDF](output/pdf/TECHNICAL_BRIEF.pdf)
-- **Final audit:** [Requirement matrix and validation evidence](docs/FINAL_AUDIT.md)
 
 All people, records, identifiers, and clinical stories in this prototype are synthetic.
 
@@ -81,7 +80,7 @@ PHI redaction covers contextual known names (including titled and CJK names), ID
 
 ## Performance
 
-The production benchmark signs in through `/api/session`, reuses the authenticated cookie, performs 15 warmups, then measures 100 `/api/highlights` requests; any non-200 fails the run. Final audit on 28 Aug 2026:
+The production benchmark signs in through `/api/session`, reuses the authenticated cookie, performs 15 warmups, then measures 100 `/api/highlights` requests; any non-200 fails the run. Production measurement on 28 Aug 2026:
 
 ```text
 P50 207.60 ms · P95 268.50 ms · P99 322.75 ms · failures 0
@@ -100,7 +99,7 @@ npx next build --webpack
 NIGHTINGALE_BASE_URL=https://nightingale-care-note.vercel.app npm run benchmark:glance
 ```
 
-Final audit results: npm audit 0 vulnerabilities, focused safety 23/23, live Supabase/RLS/persistence suite 17/17, and a successful production webpack build. The challenge-named Python tests are retained exactly in `tests/`.
+Validation results: npm audit 0 vulnerabilities, focused safety 23/23, live Supabase/RLS/persistence suite 17/17, and a successful production webpack build. The challenge-named Python tests are retained exactly in `tests/`.
 
 ## Demo accounts and role switching
 
